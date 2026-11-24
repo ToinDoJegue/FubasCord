@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FubasCord — Chat, Voz e Transmissão ao Vivo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    body { margin: 0; background: #1e1f22; color: #dbdee1; overflow: hidden; user-select: none; }
+    .selectable { user-select: text; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: #111214; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes pulseRing {
+      0% { box-shadow: 0 0 0 0 rgba(35, 165, 90, 0.7); }
+      70% { box-shadow: 0 0 0 7px rgba(35, 165, 90, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(35, 165, 90, 0); }
+    }
+    .speaking-ring { box-shadow: 0 0 0 2.5px #23a55a; animation: pulseRing 1.4s infinite; }
+    .speaking-card { border-color: #23a55a !important; box-shadow: inset 0 0 0 2px #23a55a; }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+    .live-dot { animation: livePulse 1.3s infinite; }
+    .server-pill { transition: height 0.18s ease, opacity 0.18s ease; }
+    .server-icon { transition: border-radius 0.2s ease, background-color 0.2s ease; }
+    .server-wrap:hover .server-icon, .server-wrap.active .server-icon { border-radius: 16px; }
+    .server-wrap:hover .server-pill { height: 20px; opacity: 1; }
+    .server-wrap.active .server-pill { height: 40px !important; opacity: 1 !important; }
+    .msg-row:hover { background-color: rgba(4, 4, 5, 0.08); }
+    .msg-row:hover .msg-actions { opacity: 1; pointer-events: auto; }
+    .msg-actions { opacity: 0; pointer-events: none; transition: opacity 0.12s ease; }
+    .stage-wrapper:hover .stage-controls { opacity: 1; }
+    .stage-controls { opacity: 0; transition: opacity 0.2s ease; }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden">
+
+  <!-- TELA DE AUTENTICAÇÃO (LOGIN / CRIAR CONTA) -->
+  <div id="auth-screen" class="fixed inset-0 z-50 bg-[#1e1f22] flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-md bg-[#313338] rounded-xl shadow-2xl border border-[#1e1f22] overflow-hidden my-auto">
+      <div class="p-6 pb-4 text-center border-b border-[#26272d]">
+        <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-[#5865f2] text-white flex items-center justify-center shadow-lg">
+          <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09-.01-.02-.04-.03-.07-.03-1.5.26-2.93.71-4.27 1.33-.01 0-.02.01-.03.02-2.72 4.07-3.47 8.03-3.1 11.95 0 .02.01.04.03.05 1.8 1.32 3.53 2.12 5.24 2.65.03.01.06 0 .07-.02.4-.55.76-1.13 1.07-1.74.02-.04 0-.08-.04-.09-.57-.22-1.11-.48-1.64-.78-.04-.02-.04-.08-.01-.11.11-.08.22-.17.33-.25.02-.02.05-.02.07-.01 3.44 1.57 7.15 1.57 10.55 0 .02-.01.05-.01.07.01.11.09.22.17.33.26.04.03.04.09-.01.11-.52.31-1.07.56-1.64.78-.04.01-.05.06-.04.09.32.61.68 1.19 1.07 1.74.03.01.06.02.09.01 1.72-.53 3.45-1.33 5.25-2.65.02-.01.03-.03.03-.05.44-4.53-.73-8.46-3.1-11.95-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.83 2.12-1.89 2.12z"/>
+          </svg>
+        </div>
+        <h1 class="text-xl font-bold text-white">Bem-vindo ao FubasCord</h1>
+        <p class="text-xs text-[#949ba4] mt-1">Chat, chamadas de voz e transmissão de tela ao vivo entre amigos</p>
+        <div id="sync-badge" class="mt-2.5 inline-flex items-center gap-1.5 text-[11px] px-2.5 py-0.5 rounded-full bg-[#232428] text-[#949ba4]">
+          <span id="sync-dot" class="w-2 h-2 rounded-full bg-[#f0b232]"></span>
+          <span id="sync-text">Conectando ao servidor...</span>
+        </div>
+      </div>
+
+      <!-- Abas Login / Cadastro -->
+      <div class="grid grid-cols-2 bg-[#2b2d31] p-1 mx-6 mt-4 rounded-lg">
+        <button id="tab-login" onclick="switchAuthTab('login')" class="py-1.5 text-sm font-semibold rounded-md bg-[#5865f2] text-white transition">Entrar</button>
+        <button id="tab-register" onclick="switchAuthTab('register')" class="py-1.5 text-sm font-semibold rounded-md text-[#b5bac1] hover:text-white transition">Criar Conta</button>
+      </div>
+
+      <!-- Formulário de Login -->
+      <form id="form-login" onsubmit="handleLogin(event)" class="p-6 pt-4 space-y-3.5">
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">Nome de usuário</label>
+          <input id="login-username" type="text" required placeholder="ex: lucas" autocomplete="username" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5865f2]" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">Senha</label>
+          <input id="login-password" type="password" required placeholder="••••••••" autocomplete="current-password" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#5865f2]" />
+        </div>
+        <p id="login-error" class="hidden text-xs text-[#f23f43] bg-[#f23f43]/10 border border-[#f23f43]/30 rounded px-3 py-2"></p>
+        <button type="submit" id="btn-login-submit" class="w-full bg-[#5865f2] hover:bg-[#4752c4] text-white font-semibold py-2.5 rounded text-sm transition cursor-pointer">
+          Entrar no FubasCord
+        </button>
+        <p class="text-[11px] text-center text-[#949ba4]">Ainda não tem conta? Clique em <button type="button" onclick="switchAuthTab('register')" class="text-[#00a8fc] hover:underline font-medium">Criar Conta</button> acima.</p>
+      </form>
+
+      <!-- Formulário de Cadastro -->
+      <form id="form-register" onsubmit="handleRegister(event)" class="hidden p-6 pt-4 space-y-3">
+        <!-- Aviso quando cadastros estão bloqueados pelo Admin -->
+        <div id="register-closed-banner" class="hidden bg-[#f23f43]/15 border border-[#f23f43]/40 rounded-lg p-3.5 text-center space-y-1">
+          <p class="text-sm font-bold text-[#f23f43]">🔒 Novos cadastros fechados</p>
+          <p class="text-xs text-[#dbdee1]">O administrador trancou a criação de novas contas neste grupo. Se você já tem conta, use a aba <strong>Entrar</strong>.</p>
+        </div>
+
+        <div id="register-fields-wrap" class="space-y-3">
+          <div class="bg-[#5865f2]/10 border border-[#5865f2]/30 rounded-lg p-2.5">
+            <label class="block text-[11px] font-bold uppercase text-[#949cf7] mb-1">🔑 Código de Convite Secreto</label>
+            <input id="reg-invite-code" type="text" required placeholder="Peça o código ao Admin do grupo" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5865f2] uppercase tracking-wider font-semibold" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">Apelido visível</label>
+              <input id="reg-name" type="text" required maxlength="24" placeholder="Ex: Lucas Gamer" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5865f2]" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">@Usuário (login)</label>
+              <input id="reg-username" type="text" required maxlength="20" placeholder="ex: lucas" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5865f2]" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">Senha</label>
+            <input id="reg-password" type="password" required minlength="4" placeholder="Mínimo 4 caracteres" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5865f2]" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1.5">Avatar e Cor</label>
+            <div class="flex items-center justify-between gap-2 bg-[#1e1f22] p-2 rounded">
+              <div id="reg-emoji-picker" class="flex gap-1.5 flex-wrap"></div>
+              <div id="reg-color-picker" class="flex gap-1.5"></div>
+            </div>
+          </div>
+          <p id="reg-error" class="hidden text-xs text-[#f23f43] bg-[#f23f43]/10 border border-[#f23f43]/30 rounded px-3 py-2"></p>
+          <button type="submit" id="btn-reg-submit" class="w-full bg-[#23a55a] hover:bg-[#1a8245] text-white font-semibold py-2.5 rounded text-sm transition cursor-pointer">
+            Criar Conta e Entrar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APLICATIVO PRINCIPAL -->
+  <div id="app" class="hidden flex h-full w-full relative">
+    <div id="mobile-backdrop" onclick="closeMobileDrawers()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+
+    <!-- 1. BARRA DE SERVIDORES -->
+    <aside id="servers-drawer" class="fixed md:static inset-y-0 left-0 z-40 w-[72px] bg-[#1e1f22] flex flex-col items-center py-3 gap-2 shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-200">
+      <div class="server-wrap relative flex items-center justify-center w-full group">
+        <span class="server-pill absolute left-0 w-1 h-0 opacity-0 bg-white rounded-r-full"></span>
+        <button onclick="openInviteModal()" title="Convidar Amigos" class="server-icon w-12 h-12 rounded-[24px] bg-[#313338] hover:bg-[#5865f2] text-[#dbdee1] hover:text-white flex items-center justify-center shadow-md cursor-pointer">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09-.01-.02-.04-.03-.07-.03-1.5.26-2.93.71-4.27 1.33-.01 0-.02.01-.03.02-2.72 4.07-3.47 8.03-3.1 11.95 0 .02.01.04.03.05 1.8 1.32 3.53 2.12 5.24 2.65.03.01.06 0 .07-.02.4-.55.76-1.13 1.07-1.74.02-.04 0-.08-.04-.09-.57-.22-1.11-.48-1.64-.78-.04-.02-.04-.08-.01-.11.11-.08.22-.17.33-.25.02-.02.05-.02.07-.01 3.44 1.57 7.15 1.57 10.55 0 .02-.01.05-.01.07.01.11.09.22.17.33.26.04.03.04.09-.01.11-.52.31-1.07.56-1.64.78-.04.01-.05.06-.04.09.32.61.68 1.19 1.07 1.74.03.01.06.02.09.01 1.72-.53 3.45-1.33 5.25-2.65.02-.01.03-.03.03-.05.44-4.53-.73-8.46-3.1-11.95-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.83 2.12-1.89 2.12z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="w-8 h-[2px] bg-[#35363c] rounded-full my-0.5"></div>
+      <div id="server-list" class="flex flex-col items-center gap-2 w-full overflow-y-auto no-scrollbar flex-1"></div>
+      <div class="server-wrap relative flex items-center justify-center w-full mt-1">
+        <span class="server-pill absolute left-0 w-1 h-0 opacity-0 bg-white rounded-r-full"></span>
+        <button onclick="openCreateServerModal()" title="Criar Novo Servidor" class="server-icon w-12 h-12 rounded-[24px] bg-[#313338] hover:bg-[#23a55a] text-[#23a55a] hover:text-white flex items-center justify-center text-2xl font-light cursor-pointer">+</button>
+      </div>
+    </aside>
+
+    <!-- 2. BARRA DE CANAIS -->
+    <aside id="channels-drawer" class="fixed md:static inset-y-0 left-[72px] md:left-0 z-40 w-60 bg-[#2b2d31] flex flex-col shrink-0 transform -translate-x-[320px] md:translate-x-0 transition-transform duration-200 border-r border-[#1f2023] md:border-none">
+      <div onclick="openInviteModal()" class="h-12 px-4 flex items-center justify-between border-b border-[#1f2023] hover:bg-[#35373c] cursor-pointer transition shrink-0">
+        <h1 id="current-server-name" class="font-bold text-white text-[15px] truncate">Q.G. da Galera</h1>
+        <svg class="w-4 h-4 text-[#b5bac1] shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </div>
+
+      <div id="channel-list" class="flex-1 overflow-y-auto px-2 py-3 space-y-4"></div>
+
+      <!-- Painel da Sala de Voz Conectada -->
+      <div id="voice-connected-panel" class="hidden bg-[#232428] border-t border-[#1e1f22] px-2.5 py-2">
+        <div class="flex items-center justify-between">
+          <div onclick="focusCurrentVoiceRoom()" class="min-w-0 cursor-pointer group">
+            <div class="flex items-center gap-1.5 text-[#23a55a] text-xs font-semibold">
+              <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1a7 7 0 0 1 14 0v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z"/></svg>
+              <span>Voz Conectada</span>
+            </div>
+            <p id="voice-channel-label" class="text-[11px] text-[#949ba4] group-hover:text-white group-hover:underline truncate">Sala Principal / Q.G.</p>
+          </div>
+          <div class="flex items-center gap-1">
+            <button id="panel-screen-btn" onclick="toggleScreenShare()" title="Transmitir Tela na Sala" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </button>
+            <button onclick="disconnectVoice()" title="Desconectar" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-[#f23f43] cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de Perfil do Usuário Logado -->
+      <div class="h-[52px] bg-[#232428] px-2 flex items-center justify-between shrink-0">
+        <div onclick="openProfileModal()" class="flex items-center gap-2 p-1 rounded hover:bg-[#35373c] cursor-pointer min-w-0 flex-1">
+          <div class="relative shrink-0">
+            <div id="me-avatar" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white bg-[#5865f2]">😎</div>
+            <span id="me-status-dot" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#23a55a] border-2 border-[#232428]"></span>
+          </div>
+          <div class="min-w-0 leading-tight">
+            <p id="me-name" class="text-xs font-semibold text-white truncate">Você</p>
+            <p id="me-tag" class="text-[11px] text-[#949ba4] truncate">Online</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-0.5 shrink-0">
+          <button id="btn-mute" onclick="toggleMute()" title="Silenciar Microfone" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer relative">
+            <svg id="icon-mic" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15a.998.998 0 0 0-.98-.85c-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08a6.993 6.993 0 0 0 5.91-5.78c.1-.6-.39-1.14-1-1.14z"/></svg>
+          </button>
+          <button id="btn-deafen" onclick="toggleDeafen()" title="Desativar Áudio" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer">
+            <svg id="icon-headset" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1a7 7 0 0 1 14 0v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z"/></svg>
+          </button>
+          <button onclick="openProfileModal()" title="Configurações da Conta" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 3. ÁREA PRINCIPAL (CHAT OU PALCO DA SALA DE VOZ / LIVE) -->
+    <main class="flex-1 bg-[#313338] flex flex-col min-w-0 relative">
+
+      <!-- VISÃO A: CANAL DE TEXTO -->
+      <div id="text-channel-view" class="flex-1 flex flex-col min-h-0">
+        <header class="h-12 px-4 border-b border-[#1f2023] flex items-center justify-between gap-2 shrink-0 bg-[#313338]">
+          <div class="flex items-center gap-2 min-w-0">
+            <button onclick="openMobileLeft()" class="md:hidden p-1.5 -ml-1.5 rounded text-[#b5bac1] hover:text-white hover:bg-[#35373c]">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <span class="text-[#80848e] text-xl font-medium">#</span>
+            <h2 id="active-channel-title" class="font-bold text-white text-[15px] truncate">geral</h2>
+            <span class="hidden sm:inline text-[#3f4147]">|</span>
+            <p id="active-channel-topic" class="hidden sm:block text-xs text-[#949ba4] truncate">Bate-papo principal da galera</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <!-- Indicador de Rede / Backup -->
+            <button onclick="openNetworkModal()" title="Status de Rede, Segurança e Backup (GitHub / PC)" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#232428] hover:bg-[#1e1f22] text-[#dbdee1] border border-[#3f4147] cursor-pointer transition">
+              <span id="net-pill-dot" class="w-2 h-2 rounded-full bg-[#23a55a]"></span>
+              <span id="net-pill-label" class="hidden sm:inline">Rede OK</span>
+              <span id="net-pill-ping" class="text-[11px] text-[#949ba4]">--ms</span>
+            </button>
+            <button id="header-live-jump-btn" onclick="jumpToActiveLive()" class="hidden items-center gap-1.5 px-2.5 py-1 rounded text-xs font-bold bg-[#f23f43] hover:bg-[#da373c] text-white cursor-pointer transition">
+              <span class="w-2 h-2 rounded-full bg-white live-dot"></span>
+              <span id="header-live-jump-label">AO VIVO na Sala</span>
+            </button>
+            <button onclick="toggleScreenShare()" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#2b2d31] hover:bg-[#35373c] text-[#dbdee1] cursor-pointer transition">
+              <svg class="w-4 h-4 text-[#23a55a]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              <span class="hidden sm:inline">Transmitir</span>
+            </button>
+            <div class="relative hidden sm:block">
+              <input id="search-input" oninput="renderMessages()" type="text" placeholder="Buscar" class="w-32 focus:w-44 transition-all bg-[#1e1f22] text-xs text-[#dbdee1] placeholder-[#80848e] rounded px-2.5 py-1.5 outline-none" />
+            </div>
+            <button onclick="toggleMembersDrawer()" title="Mostrar/Ocultar Membros" class="p-1.5 rounded text-[#b5bac1] hover:text-white hover:bg-[#35373c] cursor-pointer">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div id="messages-container" class="flex-1 overflow-y-auto px-4 py-4 space-y-1"></div>
+
+        <div id="reply-banner" class="hidden mx-4 px-3 py-1.5 bg-[#2b2d31] rounded-t-lg border-b border-[#1e1f22] flex items-center justify-between text-xs text-[#b5bac1]">
+          <span>Respondendo a <strong id="reply-target-name" class="text-white"></strong></span>
+          <button onclick="cancelReply()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+        </div>
+
+        <div id="image-preview-bar" class="hidden mx-4 p-2.5 bg-[#2b2d31] rounded-t-lg border-b border-[#1e1f22] flex items-center gap-3">
+          <img id="image-preview-thumb" src="" alt="Prévia" class="h-16 w-24 object-cover rounded border border-[#3f4147]" />
+          <div class="flex-1 min-w-0">
+            <p id="image-preview-name" class="text-xs text-white font-medium truncate">imagem.png</p>
+            <p class="text-[11px] text-[#949ba4]">Pronta para enviar no chat</p>
+          </div>
+          <button onclick="clearPendingImage()" class="p-1.5 text-[#f23f43] hover:bg-[#35373c] rounded cursor-pointer">🗑️</button>
+        </div>
+
+        <div class="px-4 pb-5 pt-1 shrink-0 relative">
+          <div id="emoji-picker-popover" class="hidden absolute bottom-16 right-6 z-20 bg-[#2b2d31] border border-[#1e1f22] rounded-lg shadow-2xl p-2.5 w-64">
+            <p class="text-[11px] font-bold uppercase text-[#949ba4] mb-2">Emojis rápidos</p>
+            <div id="emoji-grid" class="grid grid-cols-7 gap-1 text-lg"></div>
+          </div>
+          <form onsubmit="handleSendMessage(event)" id="chat-input-box" class="bg-[#383a40] rounded-lg px-3 py-2.5 flex items-center gap-2.5">
+            <label title="Enviar Imagem" class="w-6 h-6 rounded-full bg-[#b5bac1] hover:bg-white text-[#313338] flex items-center justify-center font-bold text-base cursor-pointer shrink-0 transition">
+              +
+              <input id="image-file-input" type="file" accept="image/*" onchange="handleImageSelected(event)" class="hidden" />
+            </label>
+            <input id="message-input" type="text" autocomplete="off" placeholder="Conversar em #geral" class="flex-1 bg-transparent text-sm text-[#dbdee1] placeholder-[#80848e] outline-none" />
+            <button type="button" onclick="toggleEmojiPicker()" title="Emojis" class="text-lg hover:scale-110 transition cursor-pointer">😄</button>
+            <button type="submit" title="Enviar" class="px-2.5 py-1 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer transition">Enviar</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- VISÃO B: PALCO DO CANAL DE VOZ / TRANSMISSÃO AO VIVO -->
+      <div id="voice-stage-view" class="hidden flex-1 flex flex-col bg-[#111214] min-h-0">
+        <header class="h-12 px-4 flex items-center justify-between border-b border-[#1e1f22] bg-[#18191c] shrink-0">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <button onclick="openMobileLeft()" class="md:hidden p-1.5 -ml-1.5 rounded text-[#b5bac1] hover:text-white hover:bg-[#2b2d31]">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <svg class="w-5 h-5 text-[#23a55a] shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+            <h2 id="voice-stage-title" class="font-bold text-white text-[15px] truncate">Sala Principal</h2>
+            <span id="stage-live-pill" class="hidden items-center gap-1.5 bg-[#f23f43] text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded">
+              <span class="w-1.5 h-1.5 rounded-full bg-white live-dot"></span> AO VIVO
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Status de Rede / Anti-Travamento na Call -->
+            <button onclick="openNetworkModal()" title="Monitor de Rede e Anti-Travamento" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#232428] hover:bg-[#2b2d31] text-[#dbdee1] border border-[#35373c] cursor-pointer transition">
+              <span id="stage-net-dot" class="w-2 h-2 rounded-full bg-[#23a55a]"></span>
+              <span id="stage-net-ping" class="text-[11px]">--ms</span>
+            </button>
+            <button onclick="returnToTextChat()" class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#2b2d31] hover:bg-[#35373c] text-xs font-semibold text-white cursor-pointer transition">
+              <span># Abrir Chat</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="flex-1 p-3 sm:p-4 flex flex-col gap-3 overflow-y-auto min-h-0">
+          <!-- Player da Transmissão Ao Vivo (aberto SOMENTE ao assistir ou transmitir) -->
+          <div id="live-player-box" class="hidden stage-wrapper relative w-full flex-1 min-h-[240px] bg-black rounded-xl overflow-hidden border border-[#2b2d31] shadow-2xl flex items-center justify-center">
+            <video id="stage-video" autoplay playsinline class="w-full h-full object-contain bg-black"></video>
+            <div id="stage-waiting-overlay" class="hidden absolute inset-0 bg-[#18191c]/90 flex flex-col items-center justify-center p-4 text-center">
+              <div class="w-10 h-10 border-4 border-[#5865f2] border-t-transparent rounded-full animate-spin mb-3"></div>
+              <p id="stage-waiting-text" class="text-sm font-semibold text-white">Conectando à transmissão de tela...</p>
+              <p class="text-xs text-[#949ba4] mt-1">Estabelecendo conexão direta ponto a ponto (WebRTC)</p>
+            </div>
+            <div class="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
+              <span class="flex items-center gap-1.5 bg-[#f23f43] text-white text-[11px] font-extrabold uppercase px-2.5 py-1 rounded shadow">
+                <span class="w-2 h-2 rounded-full bg-white live-dot"></span> AO VIVO
+              </span>
+              <span id="stage-streamer-badge" class="bg-black/75 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded">Tela</span>
+            </div>
+            <div class="stage-controls absolute bottom-3 inset-x-3 flex items-center justify-between bg-black/80 backdrop-blur-md px-3.5 py-2 rounded-lg border border-white/10">
+              <div class="flex items-center gap-3">
+                <span id="stage-quality-label" class="text-xs text-[#b5bac1] font-medium">P2P · HD</span>
+                <div id="watch-volume-wrap" class="flex items-center gap-1.5">
+                  <span class="text-xs">🔊</span>
+                  <input id="stream-volume" type="range" min="0" max="100" value="80" oninput="updateStreamVolume(this.value)" class="w-20 accent-[#5865f2] cursor-pointer" />
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="fullscreenStageVideo()" class="px-2.5 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-semibold cursor-pointer">⛶ Tela Cheia</button>
+                <button id="stage-stop-watch-btn" onclick="stopWatchingOrSharing()" class="px-2.5 py-1 rounded bg-[#f23f43] hover:bg-[#da373c] text-white text-xs font-semibold cursor-pointer">Parar de assistir</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grade de Participantes -->
+          <div id="voice-participants-grid" class="grid gap-3 flex-1"></div>
+        </div>
+
+        <!-- Barra Inferior de Controles da Call -->
+        <div class="h-16 bg-[#18191c] border-t border-[#1e1f22] px-4 flex items-center justify-center gap-3 shrink-0">
+          <button id="stage-btn-screen" onclick="toggleScreenShare()" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-semibold cursor-pointer transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <span id="stage-btn-screen-text">Compartilhar Tela</span>
+          </button>
+          <button id="stage-btn-mute" onclick="toggleMute()" class="w-11 h-11 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center cursor-pointer transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15a.998.998 0 0 0-.98-.85c-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08a6.993 6.993 0 0 0 5.91-5.78c.1-.6-.39-1.14-1-1.14z"/></svg>
+          </button>
+          <button id="stage-btn-deafen" onclick="toggleDeafen()" class="w-11 h-11 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center cursor-pointer transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1a7 7 0 0 1 14 0v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z"/></svg>
+          </button>
+          <button onclick="disconnectVoice()" class="w-12 h-11 rounded-full bg-[#f23f43] hover:bg-[#da373c] text-white flex items-center justify-center cursor-pointer transition shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"/></svg>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- 4. LISTA DE MEMBROS -->
+    <aside id="members-drawer" class="fixed md:static inset-y-0 right-0 z-40 w-60 bg-[#2b2d31] overflow-y-auto px-3 py-4 shrink-0 transform translate-x-full md:translate-x-0 transition-transform duration-200 border-l border-[#1f2023] md:border-none"></aside>
+  </div>
+
+  <!-- Contêiner oculto APENAS para áudio dos microfones dos amigos (nunca da tela) -->
+  <div id="remote-audio-pool" class="hidden"></div>
+
+  <!-- MODAL GENÉRICO -->
+  <div id="modal-overlay" onclick="closeModalOnBackdrop(event)" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+    <div id="modal-box" class="bg-[#313338] rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-[#1e1f22]"></div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-[#111214] text-white text-xs font-medium px-4 py-2.5 rounded-lg shadow-xl border border-[#2b2d31]"></div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, addDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+    // =========================================================================
+    // CONFIGURAÇÃO DO FIREBASE (FubasCord)
+    // =========================================================================
+    const GITHUB_CONFIG = {
+      apiKey: "AIzaSyD5D9dBV50PY1OJsDtZmufIVbfOyI1Hf7o",
+      authDomain: "fubascord.firebaseapp.com",
+      projectId: "fubascord",
+      storageBucket: "fubascord.firebasestorage.app",
+      messagingSenderId: "445713812896",
+      appId: "1:445713812896:web:aa8bb02b8d36d6021728c5",
+      measurementId: "G-X2K3DHM64D"
+    };
+
+    const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'fubascord-prod-v1';
+    const firebaseConfig = typeof __firebase_config !== 'undefined'
+      ? JSON.parse(__firebase_config)
+      : (GITHUB_CONFIG.apiKey ? GITHUB_CONFIG : null);
+
+    let db = null;
+    let auth = null;
+    let fbUser = null;
+    let isCloudReady = false;
+
+    const AVATAR_EMOJIS = ['😎', '🦊', '🐱', '🐼', '🐸', '🦁', '🐙', '👾', '🚀', '🎮', '🎧', '🔥'];
+    const AVATAR_COLORS = ['#5865f2', '#23a55a', '#f23f43', '#f0b232', '#eb459e', '#00a8fc'];
+    const QUICK_EMOJIS = ['😂', '🔥', '❤️', '👍', '👀', '🎉', '💀', '😭', '🤝', '🚀', '💯', '😮', '🤣', '👏'];
+    const DEFAULT_INVITE_CODE = 'FUBA2026';
+
+    const colPath = (colName) => collection(db, 'artifacts', APP_ID, 'public', 'data', colName);
+    const docPath = (colName, id) => doc(db, 'artifacts', APP_ID, 'public', 'data', colName, id);
+
+    // =========================================================================
+    // ESTADO DA APLICAÇÃO
+    // =========================================================================
+    let currentUser = null;
+    let usersMap = {};
+    let serversMap = {};
+    let messagesList = [];
+    let voiceStatesMap = {};
+
+    let activeServerId = 'srv-geral';
+    let activeChannelId = 'ch-geral';
+    let replyToMessage = null;
+    let pendingImageData = null;
+    let membersDrawerOpen = true;
+
+    let connectedVoiceChannelId = null;
+    let voiceViewMode = 'text';
+    let watchingStreamId = null;
+    let isSharingScreen = false;
+    let isMuted = false;
+    let isDeafened = false;
+
+    let selectedRegEmoji = '😎';
+    let selectedRegColor = '#5865f2';
+
+    // Segurança e Controle de Cadastros (sincronizados no Firestore)
+    let securityConfig = {
+      registrationsOpen: true,
+      inviteCode: DEFAULT_INVITE_CODE,
+      updatedBy: ''
+    };
+
+    // =========================================================================
+    // REDE, BACKUP (GITHUB <-> PC) E ANTI-TRAVAMENTO DE VOZ/VÍDEO
+    // =========================================================================
+    let netConfig = {
+      githubUrl: window.location.origin.includes('github.io') ? window.location.href.split('#')[0].split('?')[0] : '',
+      pcBackupUrl: '',
+      autoFailover: true,
+      preferredHost: 'github'
+    };
+
+    let netStats = {
+      githubPing: null,
+      githubOnline: null,
+      pcPing: null,
+      pcOnline: null,
+      webrtcRtt: null,
+      packetLoss: 0,
+      qualityMode: 'HD (1080p · 60fps)',
+      lastCheck: null
+    };
+
+    let networkMonitorTimer = null;
+
+    function isCurrentUserAdmin() {
+      return Boolean(currentUser && currentUser.isAdmin === true);
+    }
+
+    function updateNetworkBadges() {
+      const activePing = netStats.webrtcRtt ?? netStats.githubPing ?? netStats.pcPing;
+      const isPoor = (activePing !== null && activePing > 180) || netStats.packetLoss > 4;
+      const isMedium = (activePing !== null && activePing > 95) || netStats.packetLoss > 1.5;
+
+      const color = isPoor ? '#f23f43' : (isMedium ? '#f0b232' : '#23a55a');
+      const label = isPoor ? 'Rede Instável' : (isMedium ? 'Rede Média' : 'Rede OK');
+      const pingText = activePing !== null ? `${Math.round(activePing)}ms` : 'P2P';
+
+      const dot1 = document.getElementById('net-pill-dot');
+      const lbl1 = document.getElementById('net-pill-label');
+      const png1 = document.getElementById('net-pill-ping');
+      if (dot1) dot1.style.backgroundColor = color;
+      if (lbl1) lbl1.textContent = label;
+      if (png1) png1.textContent = pingText;
+
+      const dot2 = document.getElementById('stage-net-dot');
+      const png2 = document.getElementById('stage-net-ping');
+      if (dot2) dot2.style.backgroundColor = color;
+      if (png2) png2.textContent = pingText;
+    }
+
+    async function probeHostLatency(url) {
+      if (!url || !url.startsWith('http')) return { online: null, ping: null };
+      const start = performance.now();
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 3500);
+      try {
+        await fetch(url, { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal });
+        clearTimeout(timeout);
+        return { online: true, ping: Math.max(1, Math.round(performance.now() - start)) };
+      } catch (e) {
+        clearTimeout(timeout);
+        return { online: false, ping: null };
+      }
+    }
+
+    async function checkHostsHealth(manualTrigger = false) {
+      if (netConfig.githubUrl) {
+        const res = await probeHostLatency(netConfig.githubUrl);
+        netStats.githubOnline = res.online;
+        netStats.githubPing = res.ping;
+      } else {
+        netStats.githubOnline = null;
+        netStats.githubPing = null;
+      }
+
+      if (netConfig.pcBackupUrl) {
+        const res = await probeHostLatency(netConfig.pcBackupUrl);
+        netStats.pcOnline = res.online;
+        netStats.pcPing = res.ping;
+      } else {
+        netStats.pcOnline = null;
+        netStats.pcPing = null;
+      }
+
+      netStats.lastCheck = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      updateNetworkBadges();
+
+      if (netConfig.autoFailover && netConfig.githubUrl && netConfig.pcBackupUrl) {
+        const onGithub = window.location.origin.includes('github.io');
+        const onPc = netConfig.pcBackupUrl && window.location.href.startsWith(netConfig.pcBackupUrl);
+
+        if (onGithub && netStats.githubOnline === false && netStats.pcOnline === true) {
+          showToast('⚠️ GitHub instável! Alternando automaticamente para o Backup no PC...');
+          setTimeout(() => { window.location.href = netConfig.pcBackupUrl; }, 1500);
+        } else if (onPc && netStats.pcOnline === false && netStats.githubOnline === true) {
+          showToast('✅ GitHub voltou! Alternando para hospedagem principal...');
+          setTimeout(() => { window.location.href = netConfig.githubUrl; }, 1500);
+        }
+      }
+
+      if (manualTrigger) {
+        openNetworkModal();
+        showToast('Teste de latência concluído!');
+      }
+    }
+
+    async function adaptWebRTCQuality() {
+      const peerIds = Object.keys(peerConnections);
+      if (peerIds.length === 0) {
+        netStats.webrtcRtt = null;
+        netStats.packetLoss = 0;
+        netStats.qualityMode = 'HD (1080p · 60fps)';
+        updateNetworkBadges();
+        return;
+      }
+
+      let maxRtt = 0;
+      let totalLost = 0;
+      let totalPackets = 0;
+
+      for (const peerId of peerIds) {
+        const pc = peerConnections[peerId];
+        if (!pc) continue;
+
+        if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+          try { pc.restartIce(); } catch (e) {}
+        }
+
+        try {
+          const stats = await pc.getStats();
+          stats.forEach(report => {
+            if (report.type === 'candidate-pair' && report.state === 'succeeded' && report.currentRoundTripTime) {
+              maxRtt = Math.max(maxRtt, report.currentRoundTripTime * 1000);
+            }
+            if (report.type === 'inbound-rtp') {
+              totalLost += (report.packetsLost || 0);
+              totalPackets += (report.packetsReceived || 0) + (report.packetsLost || 0);
+            }
+          });
+        } catch (e) {}
+
+        if (isSharingScreen && localScreenStream) {
+          const videoSender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+          if (videoSender) {
+            try {
+              const params = videoSender.getParameters();
+              if (!params.encodings) params.encodings = [{}];
+              if (maxRtt > 180) {
+                params.encodings[0].maxBitrate = 650000;
+                params.encodings[0].maxFramerate = 15;
+                netStats.qualityMode = 'Anti-Lag (480p · 15fps)';
+              } else if (maxRtt > 95) {
+                params.encodings[0].maxBitrate = 1400000;
+                params.encodings[0].maxFramerate = 30;
+                netStats.qualityMode = 'Equilibrado (720p · 30fps)';
+              } else {
+                params.encodings[0].maxBitrate = 3000000;
+                params.encodings[0].maxFramerate = 60;
+                netStats.qualityMode = 'HD Fluido (1080p · 60fps)';
+              }
+              await videoSender.setParameters(params);
+            } catch (e) {}
+          }
+        }
+      }
+
+      netStats.webrtcRtt = maxRtt > 0 ? maxRtt : netStats.webrtcRtt;
+      netStats.packetLoss = totalPackets > 0 ? Number(((totalLost / totalPackets) * 100).toFixed(1)) : 0;
+      const qEl = document.getElementById('stage-quality-label');
+      if (qEl) qEl.textContent = netStats.qualityMode;
+      updateNetworkBadges();
+    }
+
+    function startNetworkMonitor() {
+      if (networkMonitorTimer) clearInterval(networkMonitorTimer);
+      checkHostsHealth(false);
+      networkMonitorTimer = setInterval(() => {
+        adaptWebRTCQuality();
+      }, 3000);
+      setInterval(() => {
+        checkHostsHealth(false);
+      }, 20000);
+    }
+
+    // =========================================================================
+    // ÁUDIO DE INTERFACE & UTILITÁRIOS
+    // =========================================================================
+    let audioCtx = null;
+    function playTone(freq, duration = 0.12, type = 'sine', delay = 0) {
+      if (isDeafened) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + duration);
+      } catch (e) {}
+    }
+
+    function showToast(text) {
+      const el = document.getElementById('toast');
+      el.textContent = text;
+      el.classList.remove('hidden');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.add('hidden'), 3200);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    }
+
+    function formatMessageText(raw) {
+      let safe = escapeHtml(raw);
+      safe = safe.replace(/`([^`]+)`/g, '<code class="bg-[#1e1f22] px-1.5 py-0.5 rounded text-xs font-mono text-[#eb459e]">$1</code>');
+      safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white font-semibold">$1</strong>');
+      safe = safe.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
+      safe = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-[#00a8fc] hover:underline">$1</a>');
+      return safe;
+    }
+
+    async function hashPassword(pw) {
+      const data = new TextEncoder().encode('fubascord_salt_' + pw);
+      const buf = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // =========================================================================
+    // CONTROLE DE CADASTROS FECHADOS / CÓDIGO DE CONVITE NA TELA DE AUTH
+    // =========================================================================
+    function applyRegistrationLockUI() {
+      const closedBanner = document.getElementById('register-closed-banner');
+      const fieldsWrap = document.getElementById('register-fields-wrap');
+      if (!closedBanner || !fieldsWrap) return;
+
+      const hasAnyAdmin = Object.values(usersMap).some(u => u && u.isAdmin === true);
+      const isClosed = hasAnyAdmin && securityConfig.registrationsOpen === false;
+
+      if (isClosed) {
+        closedBanner.classList.remove('hidden');
+        fieldsWrap.classList.add('hidden');
+      } else {
+        closedBanner.classList.add('hidden');
+        fieldsWrap.classList.remove('hidden');
+      }
+    }
+
+    // =========================================================================
+    // INICIALIZAÇÃO DO FIREBASE E LISTENERS EM TEMPO REAL
+    // =========================================================================
+    async function initBackend() {
+      renderAuthPickers();
+      const syncDot = document.getElementById('sync-dot');
+      const syncText = document.getElementById('sync-text');
+
+      if (!firebaseConfig) {
+        syncDot.className = 'w-2 h-2 rounded-full bg-[#f23f43]';
+        syncText.textContent = 'Modo Local (configure GITHUB_CONFIG para online)';
+        seedLocalFallback();
+        restoreSavedSession();
+        return;
+      }
+
+      try {
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+          if (!user) return;
+          fbUser = user;
+          isCloudReady = true;
+          syncDot.className = 'w-2 h-2 rounded-full bg-[#23a55a]';
+          syncText.textContent = 'Conectado ao servidor em tempo real';
+          await ensureDefaultServer();
+          await ensureSecuritySettings();
+          startRealtimeListeners();
+          startNetworkMonitor();
+          restoreSavedSession();
+        });
+      } catch (err) {
+        console.error(err);
+        syncDot.className = 'w-2 h-2 rounded-full bg-[#f23f43]';
+        syncText.textContent = 'Erro ao conectar no servidor';
+      }
+    }
+
+    async function ensureDefaultServer() {
+      const srvRef = docPath('servers', 'srv-geral');
+      const snap = await getDoc(srvRef);
+      if (!snap.exists()) {
+        await setDoc(srvRef, {
+          id: 'srv-geral',
+          name: 'Q.G. da Galera',
+          icon: '🎮',
+          channels: [
+            { id: 'ch-geral', name: 'geral', type: 'text', topic: 'Bate-papo principal da galera' },
+            { id: 'ch-clips', name: 'clipes-e-prints', type: 'text', topic: 'Mande imagens, memes e prints' },
+            { id: 'vc-sala1', name: 'Sala Principal', type: 'voice' },
+            { id: 'vc-chill', name: 'AFK / De Boa', type: 'voice' }
+          ]
+        });
+        await addDoc(colPath('messages'), {
+          channelId: 'ch-geral',
+          authorId: 'system',
+          authorName: 'FubasCord Bot',
+          authorEmoji: '🤖',
+          authorColor: '#5865f2',
+          text: 'Bem-vindos ao **FubasCord**! Entrem na **Sala Principal** para conversar por voz e clique em **Compartilhar Tela** quando quiser abrir uma live.',
+          timestamp: Date.now()
+        });
+      }
+    }
+
+    async function ensureSecuritySettings() {
+      const secRef = docPath('settings', 'security');
+      const snap = await getDoc(secRef);
+      if (!snap.exists()) {
+        await setDoc(secRef, {
+          registrationsOpen: true,
+          inviteCode: DEFAULT_INVITE_CODE,
+          updatedBy: 'system'
+        });
+      } else {
+        const d = snap.data();
+        securityConfig = {
+          registrationsOpen: d.registrationsOpen !== false,
+          inviteCode: (d.inviteCode || DEFAULT_INVITE_CODE).toUpperCase(),
+          updatedBy: d.updatedBy || ''
+        };
+      }
+      applyRegistrationLockUI();
+    }
+
+    function startRealtimeListeners() {
+      // 0. Configurações de segurança (bloqueio de cadastro e código de convite)
+      onSnapshot(docPath('settings', 'security'), (snap) => {
+        if (snap.exists()) {
+          const d = snap.data();
+          securityConfig = {
+            registrationsOpen: d.registrationsOpen !== false,
+            inviteCode: (d.inviteCode || DEFAULT_INVITE_CODE).toUpperCase(),
+            updatedBy: d.updatedBy || ''
+          };
+          applyRegistrationLockUI();
+        }
+      });
+
+      // 0.5 Configuração de Rede compartilhada (GitHub / PC Backup)
+      onSnapshot(docPath('settings', 'network'), (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          netConfig = { ...netConfig, ...data };
+          checkHostsHealth(false);
+        }
+      });
+
+      // 1. Usuários cadastrados e status online
+      onSnapshot(colPath('users'), (snap) => {
+        usersMap = {};
+        snap.forEach(d => { usersMap[d.id] = d.data(); });
+        applyRegistrationLockUI();
+        if (currentUser && usersMap[currentUser.username]) {
+          currentUser = usersMap[currentUser.username];
+          renderMeBar();
+        }
+        renderMembers();
+        renderChannels();
+      });
+
+      // 2. Servidores e canais
+      onSnapshot(colPath('servers'), (snap) => {
+        serversMap = {};
+        snap.forEach(d => { serversMap[d.id] = d.data(); });
+        if (!serversMap[activeServerId]) {
+          const first = Object.keys(serversMap)[0];
+          if (first) activeServerId = first;
+        }
+        renderServers();
+        renderChannels();
+      });
+
+      // 3. Mensagens em tempo real
+      onSnapshot(colPath('messages'), (snap) => {
+        const list = [];
+        snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+        list.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        messagesList = list;
+        renderMessages();
+      });
+
+      // 4. Participantes conectados em salas de voz e lives ativas
+      onSnapshot(colPath('voiceStates'), (snap) => {
+        const prevMap = { ...voiceStatesMap };
+        voiceStatesMap = {};
+        snap.forEach(d => { voiceStatesMap[d.id] = d.data(); });
+
+        if (watchingStreamId && (!voiceStatesMap[watchingStreamId] || !voiceStatesMap[watchingStreamId].isStreaming)) {
+          showToast('A transmissão de tela foi encerrada.');
+          watchingStreamId = null;
+        }
+
+        if (connectedVoiceChannelId && currentUser) {
+          syncWebRTCPeers(prevMap);
+        }
+
+        renderChannels();
+        renderMembers();
+        renderVoiceStage();
+        updateLiveJumpBanner();
+      });
+
+      // 5. Sinalização WebRTC (Offers, Answers, ICE Candidates)
+      onSnapshot(colPath('webrtcSignals'), (snap) => {
+        if (!currentUser) return;
+        snap.docChanges().forEach(async (change) => {
+          if (change.type !== 'added') return;
+          const sig = change.doc.data();
+          if (sig.to !== currentUser.username) return;
+          await handleIncomingSignal(change.doc.id, sig);
+        });
+      });
+
+      window.addEventListener('beforeunload', () => {
+        if (currentUser && isCloudReady) {
+          updateDoc(docPath('users', currentUser.username), { status: 'offline' }).catch(() => {});
+          deleteDoc(docPath('voiceStates', currentUser.username)).catch(() => {});
+        }
+      });
+    }
+
+    function seedLocalFallback() {
+      serversMap['srv-geral'] = {
+        id: 'srv-geral',
+        name: 'Q.G. da Galera',
+        icon: '🎮',
+        channels: [
+          { id: 'ch-geral', name: 'geral', type: 'text', topic: 'Bate-papo principal da galera' },
+          { id: 'vc-sala1', name: 'Sala Principal', type: 'voice' }
+        ]
+      };
+    }
+
+    // =========================================================================
+    // CONTAS: CADASTRO, LOGIN E SESSÃO
+    // =========================================================================
+    function renderAuthPickers() {
+      document.getElementById('reg-emoji-picker').innerHTML = AVATAR_EMOJIS.slice(0, 8).map(e => `
+        <button type="button" onclick="selectRegEmoji('${e}')" class="w-7 h-7 rounded flex items-center justify-center text-base cursor-pointer ${selectedRegEmoji === e ? 'bg-[#5865f2]' : 'hover:bg-[#313338]'}">${e}</button>
+      `).join('');
+      document.getElementById('reg-color-picker').innerHTML = AVATAR_COLORS.slice(0, 4).map(c => `
+        <button type="button" onclick="selectRegColor('${c}')" style="background:${c}" class="w-5 h-5 rounded-full cursor-pointer ${selectedRegColor === c ? 'ring-2 ring-white' : ''}"></button>
+      `).join('');
+    }
+
+    window.selectRegEmoji = (e) => { selectedRegEmoji = e; renderAuthPickers(); };
+    window.selectRegColor = (c) => { selectedRegColor = c; renderAuthPickers(); };
+
+    window.switchAuthTab = (tab) => {
+      const isLogin = tab === 'login';
+      document.getElementById('form-login').classList.toggle('hidden', !isLogin);
+      document.getElementById('form-register').classList.toggle('hidden', isLogin);
+      document.getElementById('tab-login').className = `py-1.5 text-sm font-semibold rounded-md transition ${isLogin ? 'bg-[#5865f2] text-white' : 'text-[#b5bac1] hover:text-white'}`;
+      document.getElementById('tab-register').className = `py-1.5 text-sm font-semibold rounded-md transition ${!isLogin ? 'bg-[#5865f2] text-white' : 'text-[#b5bac1] hover:text-white'}`;
+      if (!isLogin) applyRegistrationLockUI();
+    };
+
+    window.handleRegister = async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('reg-error');
+      errEl.classList.add('hidden');
+
+      const hasAnyAdmin = Object.values(usersMap).some(u => u && u.isAdmin === true);
+      if (hasAnyAdmin && securityConfig.registrationsOpen === false) {
+        errEl.textContent = 'O administrador fechou novos cadastros neste servidor.';
+        errEl.classList.remove('hidden');
+        applyRegistrationLockUI();
+        return;
+      }
+
+      const enteredCode = document.getElementById('reg-invite-code').value.trim().toUpperCase();
+      const expectedCode = (securityConfig.inviteCode || DEFAULT_INVITE_CODE).toUpperCase();
+      if (enteredCode !== expectedCode) {
+        errEl.textContent = 'Código de convite inválido! Peça o código secreto ao Admin do grupo.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const name = document.getElementById('reg-name').value.trim();
+      const username = document.getElementById('reg-username').value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+      const password = document.getElementById('reg-password').value;
+
+      if (!name || username.length < 2) {
+        errEl.textContent = 'Escolha um @usuário válido (mínimo 2 letras/números).';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const passwordHash = await hashPassword(password);
+      const isFirstUser = Object.keys(usersMap).length === 0;
+
+      const userData = {
+        username,
+        name,
+        passwordHash,
+        emoji: selectedRegEmoji,
+        color: selectedRegColor,
+        status: 'online',
+        isAdmin: isFirstUser,
+        createdAt: Date.now()
+      };
+
+      if (isCloudReady) {
+        const uRef = docPath('users', username);
+        const existing = await getDoc(uRef);
+        if (existing.exists()) {
+          errEl.textContent = 'Esse @usuário já está em uso. Escolha outro ou faça login.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        await setDoc(uRef, userData);
+      } else {
+        if (usersMap[username]) {
+          errEl.textContent = 'Esse @usuário já existe.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        usersMap[username] = userData;
+      }
+
+      completeSignIn(userData);
+      showToast(isFirstUser
+        ? `Conta Admin criada! Código de convite ativo: ${expectedCode}`
+        : `Conta criada! Bem-vindo ao FubasCord, ${name}!`);
+    };
+
+    window.handleLogin = async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('login-error');
+      errEl.classList.add('hidden');
+
+      const username = document.getElementById('login-username').value.trim().toLowerCase();
+      const password = document.getElementById('login-password').value;
+      const passwordHash = await hashPassword(password);
+
+      let foundUser = usersMap[username];
+      if (!foundUser && isCloudReady) {
+        const snap = await getDoc(docPath('users', username));
+        if (snap.exists()) foundUser = snap.data();
+      }
+
+      if (!foundUser) {
+        errEl.textContent = 'Usuário não encontrado. Crie uma conta na aba ao lado.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      if (foundUser.passwordHash !== passwordHash) {
+        errEl.textContent = 'Senha incorreta. Tente novamente.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      foundUser.status = 'online';
+      if (isCloudReady) {
+        await updateDoc(docPath('users', username), { status: 'online' });
+      }
+
+      completeSignIn(foundUser);
+      showToast(`Bem-vindo de volta, ${foundUser.name}!`);
+    };
+
+    function completeSignIn(user) {
+      currentUser = user;
+      usersMap[user.username] = user;
+      localStorage.setItem('fubascord_session', JSON.stringify({ username: user.username, passwordHash: user.passwordHash }));
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      renderAll();
+    }
+
+    async function restoreSavedSession() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('fubascord_session') || 'null');
+        if (!saved || !saved.username) return;
+        let u = usersMap[saved.username];
+        if (!u && isCloudReady) {
+          const snap = await getDoc(docPath('users', saved.username));
+          if (snap.exists()) u = snap.data();
+        }
+        if (u && u.passwordHash === saved.passwordHash) {
+          u.status = 'online';
+          if (isCloudReady) await updateDoc(docPath('users', u.username), { status: 'online' });
+          completeSignIn(u);
+        }
+      } catch (e) {}
+    }
+
+    window.logoutUser = async () => {
+      if (connectedVoiceChannelId) await disconnectVoice();
+      if (currentUser && isCloudReady) {
+        await updateDoc(docPath('users', currentUser.username), { status: 'offline' }).catch(() => {});
+      }
+      localStorage.removeItem('fubascord_session');
+      currentUser = null;
+      closeModal();
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('auth-screen').classList.remove('hidden');
+      applyRegistrationLockUI();
+    };
+
+    // =========================================================================
+    // WEBRTC REAL (ÁUDIO DO MICROFONE SEPARADO DA TELA + ZERO ECO)
+    // =========================================================================
+    const RTC_CONFIG = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' }
+      ]
+    };
+
+    let localMicStream = null;
+    let localScreenStream = null;
+    let peerConnections = {};
+    let remoteStreams = {};
+    let processedSignals = new Set();
+
+    async function acquireMicrophone() {
+      if (localMicStream) return localMicStream;
+      try {
+        localMicStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          },
+          video: false
+        });
+        localMicStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+        return localMicStream;
+      } catch (err) {
+        showToast('Microfone não permitido ou indisponível (entrando como ouvinte).');
+        return null;
+      }
+    }
+
+    function createPeerConnection(peerUsername) {
+      if (peerConnections[peerUsername]) {
+        peerConnections[peerUsername].close();
+      }
+      const pc = new RTCPeerConnection(RTC_CONFIG);
+      peerConnections[peerUsername] = pc;
+      remoteStreams[peerUsername] = { audio: new MediaStream(), screen: new MediaStream() };
+
+      if (localMicStream) {
+        localMicStream.getAudioTracks().forEach(track => pc.addTrack(track, localMicStream));
+      }
+      if (isSharingScreen && localScreenStream) {
+        localScreenStream.getTracks().forEach(track => pc.addTrack(track, localScreenStream));
+      }
+
+      pc.onicecandidate = async (event) => {
+        if (event.candidate && isCloudReady && currentUser) {
+          await addDoc(colPath('webrtcSignals'), {
+            from: currentUser.username,
+            to: peerUsername,
+            type: 'candidate',
+            candidate: JSON.stringify(event.candidate),
+            timestamp: Date.now()
+          });
+        }
+      };
+
+      pc.ontrack = (event) => {
+        const track = event.track;
+        const incomingStream = event.streams && event.streams[0];
+        const isScreenTrack = track.kind === 'video' || (incomingStream && incomingStream.getVideoTracks().length > 0);
+
+        if (isScreenTrack) {
+          if (!remoteStreams[peerUsername].screen.getTracks().some(t => t.id === track.id)) {
+            remoteStreams[peerUsername].screen.addTrack(track);
+          }
+          if (watchingStreamId === peerUsername) {
+            attachStreamToStage(remoteStreams[peerUsername].screen, peerUsername);
+          }
+        } else if (track.kind === 'audio') {
+          if (!remoteStreams[peerUsername].audio.getTracks().some(t => t.id === track.id)) {
+            remoteStreams[peerUsername].audio.addTrack(track);
+          }
+          attachRemoteVoiceAudio(peerUsername, remoteStreams[peerUsername].audio);
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+          delete peerConnections[peerUsername];
+        }
+      };
+
+      return pc;
+    }
+
+    async function callPeer(peerUsername) {
+      if (!isCloudReady || !currentUser) return;
+      const pc = createPeerConnection(peerUsername);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await addDoc(colPath('webrtcSignals'), {
+        from: currentUser.username,
+        to: peerUsername,
+        type: 'offer',
+        sdp: offer.sdp,
+        timestamp: Date.now()
+      });
+    }
+
+    async function handleIncomingSignal(signalId, sig) {
+      if (processedSignals.has(signalId)) return;
+      processedSignals.add(signalId);
+      deleteDoc(docPath('webrtcSignals', signalId)).catch(() => {});
+
+      if (!connectedVoiceChannelId) return;
+      const peerUsername = sig.from;
+
+      try {
+        if (sig.type === 'offer') {
+          const pc = createPeerConnection(peerUsername);
+          await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: sig.sdp }));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await addDoc(colPath('webrtcSignals'), {
+            from: currentUser.username,
+            to: peerUsername,
+            type: 'answer',
+            sdp: answer.sdp,
+            timestamp: Date.now()
+          });
+        } else if (sig.type === 'answer') {
+          const pc = peerConnections[peerUsername];
+          if (pc && pc.signalingState === 'have-local-offer') {
+            await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: sig.sdp }));
+          }
+        } else if (sig.type === 'candidate') {
+          const pc = peerConnections[peerUsername];
+          if (pc && sig.candidate) {
+            await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(sig.candidate)));
+          }
+        }
+      } catch (err) {
+        console.warn('Sinal WebRTC:', err);
+      }
+    }
+
+    function syncWebRTCPeers(prevMap) {
+      const roomPeers = Object.values(voiceStatesMap)
+        .filter(v => v.channelId === connectedVoiceChannelId && v.username !== currentUser.username)
+        .map(v => v.username);
+
+      Object.keys(peerConnections).forEach(existing => {
+        if (!roomPeers.includes(existing)) {
+          peerConnections[existing].close();
+          delete peerConnections[existing];
+          delete remoteStreams[existing];
+          const audioEl = document.getElementById('remote-audio-' + existing);
+          if (audioEl) audioEl.remove();
+        }
+      });
+
+      roomPeers.forEach(peer => {
+        if (!peerConnections[peer] && currentUser.username < peer) {
+          callPeer(peer);
+        }
+      });
+    }
+
+    function attachRemoteVoiceAudio(peerUsername, stream) {
+      if (currentUser && peerUsername === currentUser.username) return;
+      const pool = document.getElementById('remote-audio-pool');
+      let audioEl = document.getElementById('remote-audio-' + peerUsername);
+      if (!audioEl) {
+        audioEl = document.createElement('audio');
+        audioEl.id = 'remote-audio-' + peerUsername;
+        audioEl.autoplay = true;
+        pool.appendChild(audioEl);
+      }
+      audioEl.srcObject = stream;
+      audioEl.muted = isDeafened;
+    }
+
+    function closeAllWebRTC() {
+      Object.values(peerConnections).forEach(pc => pc.close());
+      peerConnections = {};
+      remoteStreams = {};
+      document.getElementById('remote-audio-pool').innerHTML = '';
+      if (localMicStream) {
+        localMicStream.getTracks().forEach(t => t.stop());
+        localMicStream = null;
+      }
+      if (localScreenStream) {
+        localScreenStream.getTracks().forEach(t => t.stop());
+        localScreenStream = null;
+      }
+    }
+
+    async function renegotiateAllPeers() {
+      const peers = Object.keys(peerConnections);
+      for (const peer of peers) {
+        await callPeer(peer);
+      }
+    }
+
+    // =========================================================================
+    // SALA DE VOZ & COMPARTILHAMENTO DE TELA AO VIVO
+    // =========================================================================
+    window.joinVoiceChannel = async (channelId) => {
+      if (!currentUser) return;
+      const srv = serversMap[activeServerId];
+      const ch = srv?.channels?.find(c => c.id === channelId);
+      if (!ch) return;
+
+      const wasConnected = connectedVoiceChannelId === channelId;
+      connectedVoiceChannelId = channelId;
+      voiceViewMode = 'voice';
+      watchingStreamId = null;
+
+      await acquireMicrophone();
+
+      if (isCloudReady) {
+        await setDoc(docPath('voiceStates', currentUser.username), {
+          username: currentUser.username,
+          name: currentUser.name,
+          emoji: currentUser.emoji,
+          color: currentUser.color,
+          serverId: activeServerId,
+          channelId: channelId,
+          isMuted,
+          isDeafened,
+          isStreaming: isSharingScreen,
+          joinedAt: Date.now()
+        });
+      }
+
+      document.getElementById('voice-connected-panel').classList.remove('hidden');
+      document.getElementById('voice-channel-label').textContent = `${ch.name} / ${srv.name}`;
+
+      if (!wasConnected) {
+        playTone(520, 0.08, 'sine', 0);
+        playTone(680, 0.11, 'sine', 0.08);
+        showToast(`Conectado por voz em ${ch.name}`);
+      }
+
+      closeMobileDrawers();
+      renderChannels();
+      renderVoiceStage();
+    };
+
+    window.disconnectVoice = async () => {
+      if (isSharingScreen) await stopScreenShare(true);
+      closeAllWebRTC();
+      if (currentUser && isCloudReady) {
+        await deleteDoc(docPath('voiceStates', currentUser.username)).catch(() => {});
+      }
+      connectedVoiceChannelId = null;
+      watchingStreamId = null;
+      voiceViewMode = 'text';
+
+      document.getElementById('voice-connected-panel').classList.add('hidden');
+      playTone(440, 0.09, 'sine', 0);
+      playTone(310, 0.12, 'sine', 0.09);
+      showToast('Desconectado da sala de voz');
+      renderChannels();
+      renderVoiceStage();
+      updateLiveJumpBanner();
+    };
+
+    window.focusCurrentVoiceRoom = () => {
+      if (!connectedVoiceChannelId) return;
+      voiceViewMode = 'voice';
+      renderChannels();
+      renderVoiceStage();
+    };
+
+    window.returnToTextChat = () => {
+      voiceViewMode = 'text';
+      renderChannels();
+      renderVoiceStage();
+    };
+
+    window.watchMemberStream = async (streamerUsername) => {
+      const state = voiceStatesMap[streamerUsername];
+      if (!state || !state.isStreaming) return;
+      if (connectedVoiceChannelId !== state.channelId) {
+        await joinVoiceChannel(state.channelId);
+      }
+      watchingStreamId = streamerUsername;
+      voiceViewMode = 'voice';
+      renderChannels();
+      renderVoiceStage();
+
+      if (streamerUsername === currentUser.username && localScreenStream) {
+        attachStreamToStage(localScreenStream, currentUser.username);
+      } else if (remoteStreams[streamerUsername] && remoteStreams[streamerUsername].screen.getVideoTracks().length > 0) {
+        attachStreamToStage(remoteStreams[streamerUsername].screen, streamerUsername);
+      }
+    };
+
+    window.jumpToActiveLive = () => {
+      const liveUser = Object.values(voiceStatesMap).find(v => v.serverId === activeServerId && v.isStreaming);
+      if (liveUser) watchMemberStream(liveUser.username);
+    };
+
+    function attachStreamToStage(stream, streamerUsername) {
+      const videoEl = document.getElementById('stage-video');
+      const waitingEl = document.getElementById('stage-waiting-overlay');
+      const isSelf = currentUser && streamerUsername === currentUser.username;
+
+      videoEl.srcObject = stream;
+      videoEl.muted = isSelf || isDeafened;
+      if (!isSelf) {
+        videoEl.volume = (document.getElementById('stream-volume')?.value || 80) / 100;
+      }
+      videoEl.play().catch(() => {});
+
+      if (stream && stream.getVideoTracks().length > 0) {
+        waitingEl.classList.add('hidden');
+      } else {
+        waitingEl.classList.remove('hidden');
+      }
+    }
+
+    window.toggleScreenShare = async () => {
+      if (isSharingScreen) {
+        await stopScreenShare();
+      } else {
+        await startScreenShare();
+      }
+    };
+
+    async function startScreenShare() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        showToast('Seu navegador não suporta compartilhamento de tela.');
+        return;
+      }
+
+      if (!connectedVoiceChannelId) {
+        const srv = serversMap[activeServerId];
+        const firstVoice = srv?.channels?.find(c => c.type === 'voice');
+        if (!firstVoice) {
+          showToast('Crie um canal de voz primeiro.');
+          return;
+        }
+        await joinVoiceChannel(firstVoice.id);
+      }
+
+      try {
+        localScreenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { cursor: 'always', frameRate: { ideal: 30, max: 60 } },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            suppressLocalAudioPlayback: true
+          },
+          selfBrowserSurface: 'exclude'
+        });
+      } catch (err) {
+        showToast('Compartilhamento de tela cancelado.');
+        return;
+      }
+
+      isSharingScreen = true;
+      watchingStreamId = currentUser.username;
+      voiceViewMode = 'voice';
+
+      localScreenStream.getVideoTracks()[0].onended = () => stopScreenShare(true);
+
+      if (isCloudReady) {
+        await updateDoc(docPath('voiceStates', currentUser.username), { isStreaming: true });
+      }
+
+      await renegotiateAllPeers();
+      attachStreamToStage(localScreenStream, currentUser.username);
+
+      playTone(620, 0.08, 'sine', 0);
+      playTone(840, 0.12, 'sine', 0.08);
+      showToast('Você está AO VIVO transmitindo sua tela!');
+      renderChannels();
+      renderVoiceStage();
+    }
+
+    async function stopScreenShare(silent = false) {
+      if (localScreenStream) {
+        localScreenStream.getTracks().forEach(t => t.stop());
+        localScreenStream = null;
+      }
+      isSharingScreen = false;
+      if (watchingStreamId === currentUser?.username) watchingStreamId = null;
+
+      if (isCloudReady && currentUser && connectedVoiceChannelId) {
+        await updateDoc(docPath('voiceStates', currentUser.username), { isStreaming: false }).catch(() => {});
+      }
+
+      await renegotiateAllPeers();
+
+      const videoEl = document.getElementById('stage-video');
+      videoEl.srcObject = null;
+      if (!silent) showToast('Transmissão de tela encerrada.');
+      renderChannels();
+      renderVoiceStage();
+    }
+
+    window.stopWatchingOrSharing = () => {
+      if (isSharingScreen && watchingStreamId === currentUser?.username) {
+        stopScreenShare();
+      } else {
+        watchingStreamId = null;
+        document.getElementById('stage-video').srcObject = null;
+        renderVoiceStage();
+      }
+    };
+
+    window.updateStreamVolume = (val) => {
+      if (currentUser && watchingStreamId === currentUser.username) return;
+      const videoEl = document.getElementById('stage-video');
+      videoEl.volume = val / 100;
+      videoEl.muted = Number(val) === 0 || isDeafened;
+    };
+
+    window.fullscreenStageVideo = () => {
+      const box = document.getElementById('live-player-box');
+      if (box.requestFullscreen) box.requestFullscreen();
+    };
+
+    window.toggleMute = async () => {
+      isMuted = !isMuted;
+      if (localMicStream) {
+        localMicStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+      }
+      if (isCloudReady && currentUser && connectedVoiceChannelId) {
+        await updateDoc(docPath('voiceStates', currentUser.username), { isMuted }).catch(() => {});
+      }
+      renderMeBar();
+      renderVoiceStage();
+      showToast(isMuted ? 'Microfone silenciado' : 'Microfone ativado');
+    };
+
+    window.toggleDeafen = async () => {
+      isDeafened = !isDeafened;
+      if (isDeafened) isMuted = true;
+      if (localMicStream) {
+        localMicStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+      }
+      document.querySelectorAll('#remote-audio-pool audio').forEach(el => { el.muted = isDeafened; });
+      const stageVid = document.getElementById('stage-video');
+      if (stageVid) stageVid.muted = isDeafened || (currentUser && watchingStreamId === currentUser.username);
+
+      if (isCloudReady && currentUser && connectedVoiceChannelId) {
+        await updateDoc(docPath('voiceStates', currentUser.username), { isMuted, isDeafened }).catch(() => {});
+      }
+      renderMeBar();
+      renderVoiceStage();
+      showToast(isDeafened ? 'Áudio desativado' : 'Áudio reativado');
+    };
+
+    // =========================================================================
+    // RENDERIZAÇÃO DA INTERFACE
+    // =========================================================================
+    function renderAll() {
+      renderMeBar();
+      renderServers();
+      renderChannels();
+      renderMessages();
+      renderMembers();
+      renderVoiceStage();
+      updateLiveJumpBanner();
+      updateNetworkBadges();
+      document.getElementById('emoji-grid').innerHTML = QUICK_EMOJIS.map(e => `
+        <button type="button" onclick="insertEmoji('${e}')" class="p-1 rounded hover:bg-[#35373c] cursor-pointer">${e}</button>
+      `).join('');
+    }
+
+    function renderMeBar() {
+      if (!currentUser) return;
+      const av = document.getElementById('me-avatar');
+      av.textContent = currentUser.emoji || '😎';
+      av.style.backgroundColor = currentUser.color || '#5865f2';
+      document.getElementById('me-name').textContent = currentUser.name;
+      document.getElementById('me-tag').textContent = `@${currentUser.username}`;
+
+      const statusColors = { online: '#23a55a', idle: '#f0b232', dnd: '#f23f43', offline: '#80848e' };
+      document.getElementById('me-status-dot').style.backgroundColor = statusColors[currentUser.status] || '#23a55a';
+
+      const muteBtn = document.getElementById('btn-mute');
+      const deafBtn = document.getElementById('btn-deafen');
+      muteBtn.classList.toggle('text-[#f23f43]', isMuted);
+      deafBtn.classList.toggle('text-[#f23f43]', isDeafened);
+    }
+
+    function renderServers() {
+      const container = document.getElementById('server-list');
+      const list = Object.values(serversMap);
+      container.innerHTML = list.map(srv => {
+        const active = srv.id === activeServerId;
+        const hasLive = Object.values(voiceStatesMap).some(v => v.serverId === srv.id && v.isStreaming);
+        return `
+          <div class="server-wrap relative flex items-center justify-center w-full ${active ? 'active' : ''}">
+            <span class="server-pill absolute left-0 w-1 h-0 opacity-0 bg-white rounded-r-full"></span>
+            <button onclick="selectServer('${srv.id}')" title="${escapeHtml(srv.name)}"
+              class="server-icon w-12 h-12 rounded-[24px] ${active ? 'bg-[#5865f2] text-white' : 'bg-[#313338] hover:bg-[#5865f2] text-[#dbdee1] hover:text-white'} flex items-center justify-center text-xl shadow-md cursor-pointer">
+              ${escapeHtml(srv.icon || '💬')}
+            </button>
+            ${hasLive ? `<span class="absolute -bottom-0.5 right-2.5 w-4 h-4 rounded-full bg-[#f23f43] border-2 border-[#1e1f22] flex items-center justify-center text-[8px] font-bold text-white">●</span>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderChannels() {
+      const srv = serversMap[activeServerId];
+      if (!srv) return;
+      document.getElementById('current-server-name').textContent = srv.name;
+      const channels = srv.channels || [];
+      const textChannels = channels.filter(c => c.type === 'text');
+      const voiceChannels = channels.filter(c => c.type === 'voice');
+
+      const activeText = textChannels.find(c => c.id === activeChannelId) || textChannels[0];
+      if (activeText) {
+        activeChannelId = activeText.id;
+        document.getElementById('active-channel-title').textContent = activeText.name;
+        document.getElementById('active-channel-topic').textContent = activeText.topic || '';
+        document.getElementById('message-input').placeholder = `Conversar em #${activeText.name}`;
+      }
+
+      const listEl = document.getElementById('channel-list');
+      listEl.innerHTML = `
+        <div>
+          <div class="flex items-center justify-between px-1.5 mb-1 text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
+            <span>Canais de Texto</span>
+            <button onclick="openCreateChannelModal('text')" title="Criar Canal de Texto" class="text-base leading-none hover:text-white cursor-pointer">+</button>
+          </div>
+          <div class="space-y-0.5">
+            ${textChannels.map(ch => {
+              const isSelected = voiceViewMode === 'text' && ch.id === activeChannelId;
+              return `
+                <button onclick="selectTextChannel('${ch.id}')" class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-sm font-medium cursor-pointer transition ${isSelected ? 'bg-[#404249] text-white' : 'text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]'}">
+                  <span class="text-[#80848e] text-base leading-none">#</span>
+                  <span class="truncate">${escapeHtml(ch.name)}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between px-1.5 mb-1 text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
+            <span>Canais de Voz</span>
+            <button onclick="openCreateChannelModal('voice')" title="Criar Canal de Voz" class="text-base leading-none hover:text-white cursor-pointer">+</button>
+          </div>
+          <div class="space-y-1">
+            ${voiceChannels.map(vc => {
+              const isConnectedHere = connectedVoiceChannelId === vc.id;
+              const isViewingHere = voiceViewMode === 'voice' && isConnectedHere;
+              const occupants = Object.values(voiceStatesMap).filter(v => v.channelId === vc.id);
+              return `
+                <div>
+                  <button onclick="joinVoiceChannel('${vc.id}')" class="w-full flex items-center justify-between px-2 py-1.5 rounded text-sm font-medium cursor-pointer transition ${isViewingHere ? 'bg-[#404249] text-white' : (isConnectedHere ? 'text-[#23a55a] hover:bg-[#35373c]' : 'text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]')}">
+                    <span class="flex items-center gap-1.5 truncate">
+                      <svg class="w-4 h-4 shrink-0 ${isConnectedHere ? 'text-[#23a55a]' : 'text-[#80848e]'}" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                      <span class="truncate">${escapeHtml(vc.name)}</span>
+                    </span>
+                    ${occupants.length > 0 ? `<span class="text-[11px] bg-[#1e1f22] text-[#b5bac1] px-1.5 rounded-full">${occupants.length}</span>` : ''}
+                  </button>
+                  ${occupants.length > 0 ? `
+                    <div class="pl-5 pr-1 py-1 space-y-1">
+                      ${occupants.map(occ => `
+                        <div onclick="${occ.isStreaming ? `watchMemberStream('${occ.username}')` : `joinVoiceChannel('${vc.id}')`}"
+                          class="flex items-center justify-between gap-1.5 px-1.5 py-1 rounded hover:bg-[#35373c] cursor-pointer group">
+                          <div class="flex items-center gap-2 min-w-0">
+                            <div style="background:${occ.color || '#5865f2'}" class="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white shrink-0 ${!occ.isMuted ? 'speaking-ring' : ''}">${escapeHtml(occ.emoji || '😎')}</div>
+                            <span class="text-xs text-[#dbdee1] group-hover:text-white truncate">${escapeHtml(occ.name)}</span>
+                          </div>
+                          <div class="flex items-center gap-1 shrink-0">
+                            ${occ.isMuted ? `<span title="Mutado" class="text-[11px] text-[#f23f43]">🔇</span>` : ''}
+                            ${occ.isStreaming ? `<span class="bg-[#f23f43] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded tracking-wide">AO VIVO</span>` : ''}
+                          </div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMessages() {
+      const container = document.getElementById('messages-container');
+      const query = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+      const filtered = messagesList.filter(m => m.channelId === activeChannelId && (!query || (m.text || '').toLowerCase().includes(query) || (m.authorName || '').toLowerCase().includes(query)));
+
+      const wasNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 text-center">
+            <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-[#3f4147] flex items-center justify-center text-2xl">#</div>
+            <h3 class="text-lg font-bold text-white">Bem-vindo ao canal!</h3>
+            <p class="text-xs text-[#949ba4] mt-1">Nenhuma mensagem ainda. Mande um oi para a galera!</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map((msg, idx) => {
+        const prev = filtered[idx - 1];
+        const grouped = prev && prev.authorId === msg.authorId && (msg.timestamp - prev.timestamp) < 300000 && !msg.replyTo;
+        const timeStr = new Date(msg.timestamp || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const canDelete = currentUser && (msg.authorId === currentUser.username || currentUser.isAdmin);
+        const reactions = msg.reactions || {};
+
+        return `
+          <div class="msg-row group relative px-2 py-1 rounded flex items-start gap-3 ${grouped ? 'mt-0' : 'mt-3'}">
+            ${grouped
+              ? `<div class="w-10 text-[10px] text-transparent group-hover:text-[#949ba4] text-right pt-1 shrink-0 select-none">${timeStr}</div>`
+              : `<div style="background:${msg.authorColor || '#5865f2'}" class="w-10 h-10 rounded-full flex items-center justify-center text-lg text-white shrink-0 mt-0.5">${escapeHtml(msg.authorEmoji || '😎')}</div>`
+            }
+            <div class="flex-1 min-w-0">
+              ${msg.replyTo ? `
+                <div class="flex items-center gap-1.5 text-xs text-[#949ba4] mb-1 pl-2 border-l-2 border-[#4e5058]">
+                  <strong class="text-[#dbdee1]">@${escapeHtml(msg.replyTo.authorName)}</strong>
+                  <span class="truncate">${escapeHtml(msg.replyTo.text || 'Imagem')}</span>
+                </div>
+              ` : ''}
+              ${!grouped ? `
+                <div class="flex items-baseline gap-2">
+                  <span class="font-semibold text-sm text-white">${escapeHtml(msg.authorName)}</span>
+                  <span class="text-[11px] text-[#949ba4]">${timeStr}</span>
+                </div>
+              ` : ''}
+              ${msg.text ? `<div class="text-sm text-[#dbdee1] leading-relaxed break-words selectable">${formatMessageText(msg.text)}</div>` : ''}
+              ${msg.image ? `<img src="${msg.image}" alt="Anexo" onclick="openImageLightbox('${msg.image}')" class="mt-1.5 max-h-72 rounded-lg border border-[#1e1f22] cursor-zoom-in" />` : ''}
+              ${Object.keys(reactions).length > 0 ? `
+                <div class="flex flex-wrap gap-1.5 mt-1.5">
+                  ${Object.entries(reactions).map(([emoji, users]) => {
+                    if (!users || users.length === 0) return '';
+                    const mine = currentUser && users.includes(currentUser.username);
+                    return `
+                      <button onclick="toggleReaction('${msg.id}', '${emoji}')" class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border cursor-pointer transition ${mine ? 'bg-[#5865f2]/20 border-[#5865f2] text-white' : 'bg-[#2b2d31] border-transparent hover:border-[#4e5058] text-[#b5bac1]'}">
+                        <span>${emoji}</span>
+                        <span class="font-semibold text-[11px]">${users.length}</span>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+              ` : ''}
+            </div>
+
+            <div class="msg-actions absolute -top-3 right-2 bg-[#313338] border border-[#1e1f22] rounded-md shadow-lg flex items-center overflow-hidden">
+              <button onclick="toggleReaction('${msg.id}', '👍')" title="Curtir" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">👍</button>
+              <button onclick="toggleReaction('${msg.id}', '😂')" title="Rir" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">😂</button>
+              <button onclick="toggleReaction('${msg.id}', '🔥')" title="Fogo" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">🔥</button>
+              <button onclick="startReply('${msg.id}')" title="Responder" class="px-2 py-1 hover:bg-[#35373c] text-xs text-[#b5bac1] hover:text-white cursor-pointer">↩️</button>
+              ${canDelete ? `<button onclick="deleteMessage('${msg.id}')" title="Apagar" class="px-2 py-1 hover:bg-[#f23f43] text-xs text-[#f23f43] hover:text-white cursor-pointer">🗑️</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (wasNearBottom) container.scrollTop = container.scrollHeight;
+    }
+
+    function renderMembers() {
+      const container = document.getElementById('members-drawer');
+      const allUsers = Object.values(usersMap);
+      const online = allUsers.filter(u => u.status !== 'offline');
+      const offline = allUsers.filter(u => u.status === 'offline');
+
+      const statusColors = { online: '#23a55a', idle: '#f0b232', dnd: '#f23f43', offline: '#80848e' };
+
+      const renderGroup = (title, list) => {
+        if (list.length === 0) return '';
+        return `
+          <div class="mb-4">
+            <h4 class="px-2 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">${title} — ${list.length}</h4>
+            <div class="space-y-0.5">
+              ${list.map(u => {
+                const vState = voiceStatesMap[u.username];
+                return `
+                  <div onclick="${vState?.isStreaming ? `watchMemberStream('${u.username}')` : ''}"
+                    class="flex items-center justify-between gap-2 px-2 py-1.5 rounded hover:bg-[#35373c] ${u.status === 'offline' ? 'opacity-50' : ''} ${vState?.isStreaming ? 'cursor-pointer' : ''}">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <div class="relative shrink-0">
+                        <div style="background:${u.color || '#5865f2'}" class="w-8 h-8 rounded-full flex items-center justify-center text-sm text-white">${escapeHtml(u.emoji || '😎')}</div>
+                        <span style="background:${statusColors[u.status] || '#23a55a'}" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#2b2d31]"></span>
+                      </div>
+                      <div class="min-w-0 leading-tight">
+                        <div class="flex items-center gap-1">
+                          <span class="text-sm font-medium text-[#dbdee1] truncate">${escapeHtml(u.name)}</span>
+                          ${u.isAdmin ? `<span title="Admin" class="text-[10px] bg-[#5865f2]/20 text-[#949cf7] px-1 rounded font-bold">ADMIN</span>` : ''}
+                        </div>
+                        <p class="text-[11px] text-[#949ba4] truncate">${vState ? (vState.isStreaming ? '🔴 Transmitindo tela' : '🔊 Na sala de voz') : `@${escapeHtml(u.username)}`}</p>
+                      </div>
+                    </div>
+                    ${vState?.isStreaming ? `<span class="bg-[#f23f43] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded shrink-0">LIVE</span>` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      };
+
+      container.innerHTML = renderGroup('Online', online) + renderGroup('Offline', offline);
+    }
+
+    function renderVoiceStage() {
+      const textView = document.getElementById('text-channel-view');
+      const stageView = document.getElementById('voice-stage-view');
+
+      if (!connectedVoiceChannelId || voiceViewMode !== 'voice') {
+        textView.classList.remove('hidden');
+        stageView.classList.add('hidden');
+        return;
+      }
+
+      textView.classList.add('hidden');
+      stageView.classList.remove('hidden');
+
+      const srv = serversMap[activeServerId];
+      const ch = srv?.channels?.find(c => c.id === connectedVoiceChannelId);
+      document.getElementById('voice-stage-title').textContent = ch ? ch.name : 'Sala de Voz';
+
+      const occupants = Object.values(voiceStatesMap).filter(v => v.channelId === connectedVoiceChannelId);
+      const anyStreaming = occupants.some(o => o.isStreaming);
+      const livePill = document.getElementById('stage-live-pill');
+      livePill.classList.toggle('hidden', !anyStreaming);
+      livePill.classList.toggle('flex', anyStreaming);
+
+      // Player de transmissão: SÓ abre se watchingStreamId estiver ativo
+      const playerBox = document.getElementById('live-player-box');
+      if (watchingStreamId && voiceStatesMap[watchingStreamId]?.isStreaming) {
+        const streamer = voiceStatesMap[watchingStreamId];
+        const isSelfStream = currentUser && watchingStreamId === currentUser.username;
+        playerBox.classList.remove('hidden');
+        document.getElementById('stage-streamer-badge').textContent = isSelfStream ? 'Você está transmitindo sua tela' : `Tela de ${streamer.name}`;
+        document.getElementById('stage-stop-watch-btn').textContent = isSelfStream ? 'Encerrar Live' : 'Parar de assistir';
+        document.getElementById('watch-volume-wrap').classList.toggle('hidden', isSelfStream);
+
+        const videoEl = document.getElementById('stage-video');
+        if (!videoEl.srcObject) {
+          if (isSelfStream && localScreenStream) {
+            attachStreamToStage(localScreenStream, watchingStreamId);
+          } else if (remoteStreams[watchingStreamId]?.screen?.getVideoTracks().length > 0) {
+            attachStreamToStage(remoteStreams[watchingStreamId].screen, watchingStreamId);
+          } else {
+            document.getElementById('stage-waiting-overlay').classList.remove('hidden');
+          }
+        }
+      } else {
+        playerBox.classList.add('hidden');
+      }
+
+      const grid = document.getElementById('voice-participants-grid');
+      const isCompact = !playerBox.classList.contains('hidden');
+      grid.className = isCompact
+        ? 'grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0'
+        : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 flex-1';
+
+      grid.innerHTML = occupants.map(occ => {
+        const isMe = currentUser && occ.username === currentUser.username;
+        return `
+          <div class="relative bg-[#1e1f22] border-2 ${!occ.isMuted ? 'speaking-card' : 'border-[#2b2d31]'} rounded-xl flex flex-col items-center justify-center p-4 ${isCompact ? 'min-h-[104px]' : 'min-h-[180px]'} transition">
+            ${occ.isStreaming ? `
+              <button onclick="watchMemberStream('${occ.username}')" class="absolute top-2.5 right-2.5 flex items-center gap-1.5 bg-[#f23f43] hover:bg-[#da373c] text-white text-[10px] font-extrabold uppercase px-2 py-1 rounded shadow cursor-pointer">
+                <span class="w-1.5 h-1.5 rounded-full bg-white live-dot"></span>
+                <span>${watchingStreamId === occ.username ? 'AO VIVO' : '▶ Assistir'}</span>
+              </button>
+            ` : ''}
+            <div style="background:${occ.color || '#5865f2'}" class="${isCompact ? 'w-12 h-12 text-xl' : 'w-20 h-20 text-3xl'} rounded-full flex items-center justify-center text-white shadow-lg mb-2">
+              ${escapeHtml(occ.emoji || '😎')}
+            </div>
+            <div class="flex items-center gap-1.5 bg-black/50 px-2.5 py-1 rounded-md">
+              <span class="text-xs font-semibold text-white">${escapeHtml(occ.name)}${isMe ? ' (Você)' : ''}</span>
+              ${occ.isMuted ? `<span class="text-xs text-[#f23f43]">🔇</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const screenBtn = document.getElementById('stage-btn-screen');
+      const screenTxt = document.getElementById('stage-btn-screen-text');
+      screenBtn.className = isSharingScreen
+        ? 'flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#23a55a] hover:bg-[#1a8245] text-white text-xs font-semibold cursor-pointer transition'
+        : 'flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-semibold cursor-pointer transition';
+      screenTxt.textContent = isSharingScreen ? 'Parar Transmissão' : 'Compartilhar Tela';
+
+      document.getElementById('stage-btn-mute').className = `w-11 h-11 rounded-full ${isMuted ? 'bg-[#f23f43]' : 'bg-[#2b2d31] hover:bg-[#35373c]'} text-white flex items-center justify-center cursor-pointer transition`;
+      document.getElementById('stage-btn-deafen').className = `w-11 h-11 rounded-full ${isDeafened ? 'bg-[#f23f43]' : 'bg-[#2b2d31] hover:bg-[#35373c]'} text-white flex items-center justify-center cursor-pointer transition`;
+    }
+
+    function updateLiveJumpBanner() {
+      const btn = document.getElementById('header-live-jump-btn');
+      const lbl = document.getElementById('header-live-jump-label');
+      const liveUser = Object.values(voiceStatesMap).find(v => v.serverId === activeServerId && v.isStreaming);
+      if (liveUser) {
+        btn.classList.remove('hidden');
+        btn.classList.add('flex');
+        lbl.textContent = `AO VIVO: ${liveUser.name}`;
+      } else {
+        btn.classList.add('hidden');
+        btn.classList.remove('flex');
+      }
+    }
+
+    // =========================================================================
+    // AÇÕES DO CHAT, SERVIDORES E MODAIS
+    // =========================================================================
+    window.selectServer = (id) => {
+      activeServerId = id;
+      const srv = serversMap[id];
+      const firstText = srv?.channels?.find(c => c.type === 'text');
+      if (firstText) activeChannelId = firstText.id;
+      voiceViewMode = 'text';
+      renderServers();
+      renderChannels();
+      renderMessages();
+      renderVoiceStage();
+      updateLiveJumpBanner();
+    };
+
+    window.selectTextChannel = (id) => {
+      activeChannelId = id;
+      voiceViewMode = 'text';
+      closeMobileDrawers();
+      renderChannels();
+      renderMessages();
+      renderVoiceStage();
+    };
+
+    window.handleSendMessage = async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+      const input = document.getElementById('message-input');
+      const text = input.value.trim();
+      if (!text && !pendingImageData) return;
+
+      const payload = {
+        channelId: activeChannelId,
+        authorId: currentUser.username,
+        authorName: currentUser.name,
+        authorEmoji: currentUser.emoji,
+        authorColor: currentUser.color,
+        text,
+        image: pendingImageData || null,
+        replyTo: replyToMessage ? { authorName: replyToMessage.authorName, text: replyToMessage.text } : null,
+        reactions: {},
+        timestamp: Date.now()
+      };
+
+      input.value = '';
+      clearPendingImage();
+      cancelReply();
+
+      if (isCloudReady) {
+        await addDoc(colPath('messages'), payload);
+      } else {
+        messagesList.push({ id: 'local-' + Date.now(), ...payload });
+        renderMessages();
+      }
+    };
+
+    window.toggleReaction = async (msgId, emoji) => {
+      if (!currentUser) return;
+      const msg = messagesList.find(m => m.id === msgId);
+      if (!msg) return;
+      const reactions = { ...(msg.reactions || {}) };
+      const list = [...(reactions[emoji] || [])];
+      const idx = list.indexOf(currentUser.username);
+      if (idx >= 0) list.splice(idx, 1);
+      else list.push(currentUser.username);
+      reactions[emoji] = list;
+
+      if (isCloudReady) {
+        await updateDoc(docPath('messages', msgId), { reactions });
+      } else {
+        msg.reactions = reactions;
+        renderMessages();
+      }
+    };
+
+    window.deleteMessage = async (msgId) => {
+      if (isCloudReady) {
+        await deleteDoc(docPath('messages', msgId));
+      } else {
+        messagesList = messagesList.filter(m => m.id !== msgId);
+        renderMessages();
+      }
+    };
+
+    window.startReply = (msgId) => {
+      const msg = messagesList.find(m => m.id === msgId);
+      if (!msg) return;
+      replyToMessage = msg;
+      document.getElementById('reply-target-name').textContent = msg.authorName;
+      document.getElementById('reply-banner').classList.remove('hidden');
+      document.getElementById('message-input').focus();
+    };
+
+    window.cancelReply = () => {
+      replyToMessage = null;
+      document.getElementById('reply-banner').classList.add('hidden');
+    };
+
+    window.handleImageSelected = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxW = 900;
+          const scale = Math.min(1, maxW / img.width);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          pendingImageData = canvas.toDataURL('image/jpeg', 0.8);
+          document.getElementById('image-preview-thumb').src = pendingImageData;
+          document.getElementById('image-preview-name').textContent = file.name;
+          document.getElementById('image-preview-bar').classList.remove('hidden');
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    };
+
+    window.clearPendingImage = () => {
+      pendingImageData = null;
+      document.getElementById('image-preview-bar').classList.add('hidden');
+    };
+
+    window.toggleEmojiPicker = () => {
+      document.getElementById('emoji-picker-popover').classList.toggle('hidden');
+    };
+
+    window.insertEmoji = (emoji) => {
+      const input = document.getElementById('message-input');
+      input.value += emoji;
+      input.focus();
+      document.getElementById('emoji-picker-popover').classList.add('hidden');
+    };
+
+    // =========================================================================
+    // MODAIS (CONVITE, REDE/SEGURANÇA/ADMIN, PERFIL, CRIAR SERVIDOR/CANAL)
+    // =========================================================================
+    function openModal(html) {
+      document.getElementById('modal-box').innerHTML = html;
+      document.getElementById('modal-overlay').classList.remove('hidden');
+    }
+
+    window.closeModal = () => document.getElementById('modal-overlay').classList.add('hidden');
+    window.closeModalOnBackdrop = (e) => { if (e.target.id === 'modal-overlay') closeModal(); };
+
+    window.openNetworkModal = () => {
+      const ghStatus = netStats.githubOnline === null
+        ? '<span class="text-[#949ba4]">Não configurado</span>'
+        : (netStats.githubOnline
+            ? `<span class="text-[#23a55a] font-bold">● Online (${netStats.githubPing}ms)</span>`
+            : '<span class="text-[#f23f43] font-bold">● Offline</span>');
+
+      const pcStatus = netStats.pcOnline === null
+        ? '<span class="text-[#949ba4]">Não configurado</span>'
+        : (netStats.pcOnline
+            ? `<span class="text-[#23a55a] font-bold">● Online (${netStats.pcPing}ms)</span>`
+            : '<span class="text-[#f23f43] font-bold">● Offline</span>');
+
+      const bestHost = (netStats.githubOnline && netStats.pcOnline)
+        ? (netStats.githubPing <= netStats.pcPing ? 'GitHub Pages (menor latência)' : 'PC Local Backup (menor latência)')
+        : (netStats.pcOnline ? 'PC Local Backup' : 'GitHub Pages (Principal)');
+
+      const isAdmin = isCurrentUserAdmin();
+      const regsOpen = securityConfig.registrationsOpen !== false;
+
+      openModal(`
+        <div class="p-5 space-y-4 max-h-[88vh] overflow-y-auto">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-white">📡 Rede, Backup & Segurança</h3>
+              <p class="text-xs text-[#949ba4]">Anti-travamento P2P, controle de acesso e alternância GitHub ↔ PC</p>
+            </div>
+            <button onclick="closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+          </div>
+
+          ${isAdmin ? `
+            <!-- PAINEL DE SEGURANÇA DO ADMIN (BLOQUEAR CADASTROS E CÓDIGO DE CONVITE) -->
+            <div class="bg-[#232428] border border-[#5865f2]/50 rounded-lg p-3.5 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-bold uppercase text-[#949cf7]">🛡️ Controle de Novos Cadastros (Admin)</p>
+                  <p class="text-[11px] text-[#949ba4] mt-0.5">${regsOpen ? 'Aberto para amigos com o código secreto' : 'Trancado — ninguém consegue criar contas'}</p>
+                </div>
+                <button type="button" onclick="toggleRegistrationsLock()" class="px-3 py-1.5 rounded text-xs font-bold cursor-pointer transition ${regsOpen ? 'bg-[#f23f43] hover:bg-[#da373c] text-white' : 'bg-[#23a55a] hover:bg-[#1a8245] text-white'}">
+                  ${regsOpen ? '🔒 Fechar Cadastros' : '🔓 Reabrir Cadastros'}
+                </button>
+              </div>
+              <form onsubmit="handleSaveInviteCode(event)" class="flex items-center gap-2 pt-2 border-t border-[#313338]">
+                <div class="flex-1">
+                  <label class="block text-[10px] font-bold uppercase text-[#b5bac1] mb-1">Código de Convite Secreto</label>
+                  <input id="admin-invite-code" type="text" required maxlength="24" value="${escapeHtml(securityConfig.inviteCode)}" class="w-full bg-[#1e1f22] text-white rounded px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-[#5865f2]" />
+                </div>
+                <button type="submit" class="mt-4 px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">Salvar Código</button>
+              </form>
+            </div>
+          ` : ''}
+
+          <!-- Status WebRTC Anti-Travamento -->
+          <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3 space-y-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-[#b5bac1] font-semibold">Qualidade Voz/Vídeo (P2P Direto):</span>
+              <span class="text-[#23a55a] font-bold">${netStats.qualityMode}</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-[#b5bac1]">Ping da Call / Perda de Pacotes:</span>
+              <span class="text-white font-mono">${netStats.webrtcRtt ? Math.round(netStats.webrtcRtt) + 'ms' : 'Sem call ativa'} · ${netStats.packetLoss}%</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-[#b5bac1]">Melhor rota detectada:</span>
+              <span class="text-[#00a8fc] font-semibold">${bestHost}</span>
+            </div>
+          </div>
+
+          <!-- Comparativo GitHub vs PC -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-[#2b2d31] border border-[#3f4147] rounded-lg p-3">
+              <p class="text-[11px] font-bold uppercase text-[#949ba4]">1. GitHub Pages</p>
+              <p class="text-xs mt-1">${ghStatus}</p>
+              ${isAdmin ? `
+                <button onclick="switchToHost('github')" class="mt-2.5 w-full py-1.5 rounded bg-[#383a40] hover:bg-[#5865f2] text-white text-xs font-semibold cursor-pointer transition">Usar GitHub</button>
+              ` : ''}
+            </div>
+            <div class="bg-[#2b2d31] border border-[#3f4147] rounded-lg p-3">
+              <p class="text-[11px] font-bold uppercase text-[#949ba4]">2. PC Local (Backup)</p>
+              <p class="text-xs mt-1">${pcStatus}</p>
+              ${isAdmin ? `
+                <button onclick="switchToHost('pc')" class="mt-2.5 w-full py-1.5 rounded bg-[#383a40] hover:bg-[#23a55a] text-white text-xs font-semibold cursor-pointer transition">Usar PC Backup</button>
+              ` : ''}
+            </div>
+          </div>
+
+          ${isAdmin ? `
+            <form onsubmit="handleSaveNetworkConfig(event)" class="space-y-3 border-t border-[#26272d] pt-3">
+              <p class="text-[11px] font-bold uppercase text-[#949cf7]">⚙️ Configuração de Servidores (Apenas Admin)</p>
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">URL Principal (GitHub Pages)</label>
+                <input id="net-github-url" type="url" value="${escapeHtml(netConfig.githubUrl)}" placeholder="https://seu-usuario.github.io/fubascord/" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-[#5865f2]" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">URL Backup (Seu PC via Túnel HTTPS / Local)</label>
+                <input id="net-pc-url" type="url" value="${escapeHtml(netConfig.pcBackupUrl)}" placeholder="https://meu-pc.trycloudflare.com" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-[#5865f2]" />
+              </div>
+              <label class="flex items-center gap-2 text-xs text-[#dbdee1] cursor-pointer">
+                <input id="net-auto-failover" type="checkbox" ${netConfig.autoFailover ? 'checked' : ''} class="accent-[#5865f2]" />
+                <span>Alternar automaticamente se a hospedagem atual ficar instável</span>
+              </label>
+
+              <div class="flex items-center justify-between gap-2 pt-1">
+                <button type="button" onclick="checkHostsHealth(true)" class="px-3 py-2 rounded bg-[#383a40] hover:bg-[#43464d] text-white text-xs font-semibold cursor-pointer">Testar Ping Agora</button>
+                <button type="submit" class="px-4 py-2 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">Salvar Links</button>
+              </div>
+            </form>
+          ` : `
+            <div class="bg-[#2b2d31]/60 border border-[#35373c] rounded-lg p-3 flex items-center justify-between gap-2">
+              <span class="text-[11px] text-[#949ba4]">🔒 A troca manual de servidor e cadastros é restrita ao Administrador.</span>
+              <button type="button" onclick="checkHostsHealth(true)" class="px-3 py-1.5 rounded bg-[#383a40] hover:bg-[#43464d] text-white text-xs font-semibold cursor-pointer shrink-0">Testar Ping</button>
+            </div>
+          `}
+        </div>
+      `);
+    };
+
+    window.toggleRegistrationsLock = async () => {
+      if (!isCurrentUserAdmin()) {
+        showToast('Apenas o Admin pode alterar os cadastros.');
+        return;
+      }
+      const nextState = !(securityConfig.registrationsOpen !== false);
+      securityConfig.registrationsOpen = nextState;
+      securityConfig.updatedBy = currentUser.username;
+
+      if (isCloudReady) {
+        await setDoc(docPath('settings', 'security'), securityConfig, { merge: true });
+      }
+      applyRegistrationLockUI();
+      openNetworkModal();
+      showToast(nextState ? '🔓 Novos cadastros reabertos!' : '🔒 Novos cadastros fechados! Nenhum estranho pode criar conta.');
+    };
+
+    window.handleSaveInviteCode = async (e) => {
+      e.preventDefault();
+      if (!isCurrentUserAdmin()) {
+        showToast('Apenas o Admin pode alterar o código de convite.');
+        return;
+      }
+      const newCode = document.getElementById('admin-invite-code').value.trim().toUpperCase().replace(/\s+/g, '');
+      if (newCode.length < 3) {
+        showToast('O código de convite precisa ter pelo menos 3 caracteres.');
+        return;
+      }
+      securityConfig.inviteCode = newCode;
+      securityConfig.updatedBy = currentUser.username;
+      if (isCloudReady) {
+        await setDoc(docPath('settings', 'security'), securityConfig, { merge: true });
+      }
+      openNetworkModal();
+      showToast(`Código de convite atualizado para: ${newCode}`);
+    };
+
+    window.handleSaveNetworkConfig = async (e) => {
+      e.preventDefault();
+      if (!isCurrentUserAdmin()) {
+        showToast('Apenas o Admin pode alterar os servidores.');
+        return;
+      }
+      netConfig.githubUrl = document.getElementById('net-github-url').value.trim();
+      netConfig.pcBackupUrl = document.getElementById('net-pc-url').value.trim();
+      netConfig.autoFailover = document.getElementById('net-auto-failover').checked;
+
+      if (isCloudReady) {
+        await setDoc(docPath('settings', 'network'), netConfig, { merge: true });
+      }
+      await checkHostsHealth(true);
+      showToast('Configurações de backup salvas e sincronizadas!');
+    };
+
+    window.switchToHost = (target) => {
+      if (!isCurrentUserAdmin()) {
+        showToast('Apenas o Admin pode trocar o servidor manualmente.');
+        return;
+      }
+      const url = target === 'pc' ? netConfig.pcBackupUrl : netConfig.githubUrl;
+      if (!url) {
+        showToast(target === 'pc' ? 'Configure a URL do PC Backup primeiro.' : 'Configure a URL do GitHub Pages primeiro.');
+        return;
+      }
+      window.location.href = url;
+    };
+
+    window.openInviteModal = () => {
+      const link = window.location.href.split('#')[0];
+      const regsOpen = securityConfig.registrationsOpen !== false;
+      openModal(`
+        <div class="p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold text-white">Convidar Amigos para o FubasCord</h3>
+            <button onclick="closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+          </div>
+          <p class="text-xs text-[#b5bac1]">Envie o link e o código secreto abaixo para seus amigos criarem uma conta:</p>
+          <div class="flex items-center gap-2 bg-[#1e1f22] p-2 rounded border border-[#2b2d31]">
+            <input id="invite-url-input" readonly value="${escapeHtml(link)}" class="flex-1 bg-transparent text-xs text-white outline-none selectable" />
+            <button onclick="copyInviteLink()" class="px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">Copiar Link</button>
+          </div>
+          <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3 flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-bold uppercase text-[#949ba4]">Código de Convite Secreto</p>
+              <p class="text-sm font-extrabold text-white tracking-wider mt-0.5 selectable">${regsOpen ? escapeHtml(securityConfig.inviteCode) : '🔒 CADASTROS FECHADOS'}</p>
+            </div>
+            ${regsOpen ? `<button onclick="copyInviteCode()" class="px-3 py-1.5 rounded bg-[#23a55a] hover:bg-[#1a8245] text-white text-xs font-semibold cursor-pointer">Copiar Código</button>` : ''}
+          </div>
+        </div>
+      `);
+    };
+
+    window.copyInviteLink = () => {
+      const inp = document.getElementById('invite-url-input');
+      inp.select();
+      navigator.clipboard?.writeText(inp.value);
+      showToast('Link copiado!');
+    };
+
+    window.copyInviteCode = () => {
+      navigator.clipboard?.writeText(securityConfig.inviteCode);
+      showToast('Código de convite copiado!');
+    };
+
+    window.openProfileModal = () => {
+      if (!currentUser) return;
+      openModal(`
+        <form onsubmit="handleSaveProfile(event)" class="p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold text-white">Minha Conta (@${escapeHtml(currentUser.username)})</h3>
+            <button type="button" onclick="closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">Apelido</label>
+            <input id="prof-name" type="text" required maxlength="24" value="${escapeHtml(currentUser.name)}" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5865f2]" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">Status</label>
+            <select id="prof-status" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2 text-sm outline-none">
+              <option value="online" ${currentUser.status === 'online' ? 'selected' : ''}>🟢 Online</option>
+              <option value="idle" ${currentUser.status === 'idle' ? 'selected' : ''}>🌙 Ausente</option>
+              <option value="dnd" ${currentUser.status === 'dnd' ? 'selected' : ''}>⛔ Não Perturbe</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1.5">Avatar</label>
+            <div class="flex flex-wrap gap-1.5 bg-[#1e1f22] p-2 rounded">
+              ${AVATAR_EMOJIS.map(e => `
+                <button type="button" onclick="document.getElementById('prof-emoji-val').value='${e}'; showToast('Avatar ${e} selecionado')" class="w-8 h-8 rounded hover:bg-[#313338] text-lg cursor-pointer">${e}</button>
+              `).join('')}
+            </div>
+            <input type="hidden" id="prof-emoji-val" value="${escapeHtml(currentUser.emoji)}" />
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-[#26272d]">
+            <button type="button" onclick="logoutUser()" class="px-3 py-2 rounded bg-[#f23f43]/15 hover:bg-[#f23f43] text-[#f23f43] hover:text-white text-xs font-semibold cursor-pointer transition">Sair da Conta</button>
+            <button type="submit" class="px-4 py-2 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">Salvar Alterações</button>
+          </div>
+        </form>
+      `);
+    };
+
+    window.handleSaveProfile = async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+      const name = document.getElementById('prof-name').value.trim();
+      const status = document.getElementById('prof-status').value;
+      const emoji = document.getElementById('prof-emoji-val').value;
+      if (!name) return;
+
+      currentUser.name = name;
+      currentUser.status = status;
+      currentUser.emoji = emoji;
+
+      if (isCloudReady) {
+        await updateDoc(docPath('users', currentUser.username), { name, status, emoji });
+      }
+      renderMeBar();
+      renderMembers();
+      closeModal();
+      showToast('Perfil atualizado!');
+    };
+
+    window.openCreateServerModal = () => {
+      openModal(`
+        <form onsubmit="handleCreateServer(event)" class="p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold text-white">Criar Novo Servidor</h3>
+            <button type="button" onclick="closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+          </div>
+          <div class="flex gap-2">
+            <div class="w-20">
+              <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">Ícone</label>
+              <input id="new-srv-icon" type="text" maxlength="2" value="🚀" class="w-full bg-[#1e1f22] text-white text-center text-xl rounded px-2 py-2 outline-none" />
+            </div>
+            <div class="flex-1">
+              <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">Nome do Servidor</label>
+              <input id="new-srv-name" type="text" required maxlength="30" placeholder="Ex: Squad Ranked" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5865f2]" />
+            </div>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal()" class="px-3 py-2 text-xs text-[#b5bac1] hover:text-white cursor-pointer">Cancelar</button>
+            <button type="submit" class="px-4 py-2 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">Criar Servidor</button>
+          </div>
+        </form>
+      `);
+    };
+
+    window.handleCreateServer = async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('new-srv-name').value.trim();
+      const icon = document.getElementById('new-srv-icon').value.trim() || '💬';
+      if (!name) return;
+      const id = 'srv-' + Date.now();
+      const srv = {
+        id,
+        name,
+        icon,
+        channels: [
+          { id: 'ch-' + Date.now(), name: 'geral', type: 'text', topic: `Canal principal de ${name}` },
+          { id: 'vc-' + (Date.now() + 1), name: 'Sala de Voz', type: 'voice' }
+        ]
+      };
+      if (isCloudReady) {
+        await setDoc(docPath('servers', id), srv);
+      } else {
+        serversMap[id] = srv;
+      }
+      activeServerId = id;
+      activeChannelId = srv.channels[0].id;
+      closeModal();
+      renderServers();
+      renderChannels();
+      renderMessages();
+    };
+
+    window.openCreateChannelModal = (type) => {
+      openModal(`
+        <form onsubmit="handleCreateChannel(event, '${type}')" class="p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold text-white">Criar Canal de ${type === 'voice' ? 'Voz' : 'Texto'}</h3>
+            <button type="button" onclick="closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase text-[#b5bac1] mb-1">Nome do Canal</label>
+            <input id="new-ch-name" type="text" required maxlength="25" placeholder="${type === 'voice' ? 'Ex: Squad 2' : 'Ex: estrategias'}" class="w-full bg-[#1e1f22] text-white rounded px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#5865f2]" />
+          </div>
+          <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeModal()" class="px-3 py-2 text-xs text-[#b5bac1] hover:text-white cursor-pointer">Cancelar</button>
+            <button type="submit" class="px-4 py-2 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">Criar Canal</button>
+          </div>
+        </form>
+      `);
+    };
+
+    window.handleCreateChannel = async (e, type) => {
+      e.preventDefault();
+      const srv = serversMap[activeServerId];
+      if (!srv) return;
+      let name = document.getElementById('new-ch-name').value.trim();
+      if (!name) return;
+      if (type === 'text') name = name.toLowerCase().replace(/\s+/g, '-');
+      const newCh = {
+        id: (type === 'voice' ? 'vc-' : 'ch-') + Date.now(),
+        name,
+        type,
+        topic: type === 'text' ? `Conversas em #${name}` : ''
+      };
+      const updatedChannels = [...(srv.channels || []), newCh];
+      if (isCloudReady) {
+        await updateDoc(docPath('servers', srv.id), { channels: updatedChannels });
+      } else {
+        srv.channels = updatedChannels;
+        renderChannels();
+      }
+      closeModal();
+    };
+
+    window.openImageLightbox = (src) => {
+      openModal(`
+        <div class="bg-black p-2 flex flex-col items-center">
+          <img src="${src}" class="max-h-[80vh] max-w-full rounded" />
+          <button onclick="closeModal()" class="mt-2 px-4 py-1.5 rounded bg-[#313338] text-white text-xs cursor-pointer">Fechar</button>
+        </div>
+      `);
+    };
+
+    window.openMobileLeft = () => {
+      document.getElementById('servers-drawer').classList.remove('-translate-x-full');
+      document.getElementById('channels-drawer').classList.remove('-translate-x-[320px]');
+      document.getElementById('mobile-backdrop').classList.remove('hidden');
+    };
+
+    window.closeMobileDrawers = () => {
+      document.getElementById('servers-drawer').classList.add('-translate-x-full');
+      document.getElementById('channels-drawer').classList.add('-translate-x-[320px]');
+      document.getElementById('members-drawer').classList.add('translate-x-full');
+      document.getElementById('mobile-backdrop').classList.add('hidden');
+    };
+
+    window.toggleMembersDrawer = () => {
+      const el = document.getElementById('members-drawer');
+      if (window.innerWidth < 768) {
+        el.classList.toggle('translate-x-full');
+        document.getElementById('mobile-backdrop').classList.toggle('hidden');
+      } else {
+        membersDrawerOpen = !membersDrawerOpen;
+        el.classList.toggle('hidden', !membersDrawerOpen);
+      }
+    };
+
+    initBackend();
+  </script>
+</body>
+</html>
