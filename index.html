@@ -55,9 +55,14 @@
         </div>
         <h1 class="text-xl font-bold text-white">Bem-vindo ao FubasCord</h1>
         <p class="text-xs text-[#949ba4] mt-1">Chat, chamadas de voz e transmissão de tela ao vivo entre amigos</p>
-        <div id="sync-badge" class="mt-2.5 inline-flex items-center gap-1.5 text-[11px] px-2.5 py-0.5 rounded-full bg-[#232428] text-[#949ba4]">
-          <span id="sync-dot" class="w-2 h-2 rounded-full bg-[#f0b232]"></span>
-          <span id="sync-text">Conectando ao servidor...</span>
+        <div class="mt-2.5 flex items-center justify-center gap-2 flex-wrap">
+          <div id="sync-badge" class="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-0.5 rounded-full bg-[#232428] text-[#949ba4]">
+            <span id="sync-dot" class="w-2 h-2 rounded-full bg-[#f0b232]"></span>
+            <span id="sync-text">Conectando ao servidor...</span>
+          </div>
+          <button type="button" onclick="openDiagnosticsModal()" class="inline-flex items-center gap-1 text-[11px] px-2.5 py-0.5 rounded-full bg-[#5865f2]/20 hover:bg-[#5865f2]/35 text-[#949cf7] font-semibold cursor-pointer transition">
+            <span>🩺 Testar Voz & Rede</span>
+          </button>
         </div>
       </div>
 
@@ -221,6 +226,10 @@
             <p id="active-channel-topic" class="hidden sm:block text-xs text-[#949ba4] truncate">Bate-papo principal da galera</p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
+            <button onclick="openDiagnosticsModal()" title="Checklist de Verificação (Microfone, Áudio, Firewall e Rede)" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#5865f2]/20 hover:bg-[#5865f2]/35 text-[#949cf7] border border-[#5865f2]/40 cursor-pointer transition">
+              <span>🩺</span>
+              <span class="hidden md:inline">Checklist</span>
+            </button>
             <button onclick="openNetworkModal()" title="Status de Rede, Segurança e Backup (GitHub / PC)" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#232428] hover:bg-[#1e1f22] text-[#dbdee1] border border-[#3f4147] cursor-pointer transition">
               <span id="net-pill-dot" class="w-2 h-2 rounded-full bg-[#23a55a]"></span>
               <span id="net-pill-label" class="hidden sm:inline">Rede OK</span>
@@ -290,6 +299,9 @@
             </span>
           </div>
           <div class="flex items-center gap-2">
+            <button onclick="openDiagnosticsModal()" title="Checklist de Diagnóstico de Áudio e Conexão" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#5865f2]/20 hover:bg-[#5865f2]/35 text-[#949cf7] border border-[#5865f2]/40 cursor-pointer transition">
+              <span>🩺 Checklist</span>
+            </button>
             <button onclick="openNetworkModal()" title="Monitor de Rede e Anti-Travamento" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#232428] hover:bg-[#2b2d31] text-[#dbdee1] border border-[#35373c] cursor-pointer transition">
               <span id="stage-net-dot" class="w-2 h-2 rounded-full bg-[#23a55a]"></span>
               <span id="stage-net-ping" class="text-[11px]">--ms</span>
@@ -470,7 +482,6 @@
       return Boolean(currentUser && currentUser.isAdmin === true);
     }
 
-    // Filtra estados fantasmas de usuários que fecharam o navegador sem clicar em desconectar
     function rebuildActiveVoiceStates() {
       const now = Date.now();
       const filtered = {};
@@ -482,7 +493,6 @@
         const isUserOffline = uRecord && uRecord.status === 'offline' && isStale;
 
         if (isStale || isUserOffline) {
-          // Limpa registro fantasma no Firestore para todos os clientes
           if (isCloudReady && currentUser && key !== normUser(currentUser.username)) {
             deleteDoc(docPath('voiceStates', key)).catch(() => {});
           }
@@ -684,6 +694,229 @@
     }
 
     // =========================================================================
+    // CHECKLIST INTERATIVO DE DIAGNÓSTICO (MICROFONE, ÁUDIO, FIREWALL E REDE)
+    // =========================================================================
+    let diagMicStream = null;
+    let diagAnimFrame = null;
+
+    function stopDiagnosticsMic() {
+      if (diagAnimFrame) {
+        cancelAnimationFrame(diagAnimFrame);
+        diagAnimFrame = null;
+      }
+      if (diagMicStream) {
+        diagMicStream.getTracks().forEach(t => t.stop());
+        diagMicStream = null;
+      }
+    }
+
+    window.playDiagTestBeep = () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.14);
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.28);
+        gain.gain.setValueAtTime(0.14, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.52);
+
+        const el = document.getElementById('diag-speaker-status');
+        if (el) {
+          el.className = 'text-xs font-bold text-[#23a55a]';
+          el.textContent = '✅ Som tocado! Se você ouviu 3 notas, o áudio está liberado.';
+        }
+      } catch (e) {
+        showToast('Clique na tela antes de testar o áudio.');
+      }
+    };
+
+    window.runFullDiagnostics = async () => {
+      stopDiagnosticsMic();
+
+      const setCheck = (id, state, text) => {
+        const badge = document.getElementById(`diag-badge-${id}`);
+        const desc = document.getElementById(`diag-desc-${id}`);
+        if (badge) {
+          if (state === 'ok') {
+            badge.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-[#23a55a]/20 text-[#23a55a]';
+            badge.textContent = '✓ OK';
+          } else if (state === 'warn') {
+            badge.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-[#f0b232]/20 text-[#f0b232]';
+            badge.textContent = '⚠ Atenção';
+          } else if (state === 'err') {
+            badge.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-[#f23f43]/20 text-[#f23f43]';
+            badge.textContent = '✕ Falhou';
+          } else {
+            badge.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-[#5865f2]/20 text-[#949cf7]';
+            badge.textContent = 'Testando...';
+          }
+        }
+        if (desc && text) desc.textContent = text;
+      };
+
+      // 1. Verificar HTTPS / Contexto Seguro
+      const isSecure = window.isSecureContext;
+      setCheck('https', isSecure ? 'ok' : 'err', isSecure
+        ? `Conexão segura ativa (${window.location.protocol}//)`
+        : 'Site sem HTTPS! O navegador bloqueia microfone e tela em HTTP.');
+
+      // 2. Verificar Latência do Servidor Firebase
+      setCheck('firebase', 'loading', 'Medindo resposta do servidor em tempo real...');
+      if (isCloudReady && db) {
+        const t0 = performance.now();
+        try {
+          await getDoc(docPath('settings', 'security'));
+          const ms = Math.round(performance.now() - t0);
+          setCheck('firebase', ms < 450 ? 'ok' : 'warn', `Servidor conectado (${ms}ms de resposta)`);
+        } catch (e) {
+          setCheck('firebase', 'err', 'Falha ao ler banco de dados (verifique restrição de API Key)');
+        }
+      } else {
+        setCheck('firebase', 'err', 'Não conectado ao Firebase.');
+      }
+
+      // 3. Verificar Permissão e Nível de Voz do Microfone
+      setCheck('mic', 'loading', 'Solicitando acesso ao microfone...');
+      try {
+        diagMicStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        const track = diagMicStream.getAudioTracks()[0];
+        setCheck('mic', 'ok', `Microfone ativo: ${track?.label || 'Padrão do sistema'} — Fale agora para testar a barra!`);
+
+        const audioCtxTest = new (window.AudioContext || window.webkitAudioContext)();
+        const src = audioCtxTest.createMediaStreamSource(diagMicStream);
+        const analyser = audioCtxTest.createAnalyser();
+        analyser.fftSize = 256;
+        src.connect(analyser);
+        const dataArr = new Uint8Array(analyser.frequencyBinCount);
+
+        const tickMeter = () => {
+          const bar = document.getElementById('diag-mic-meter');
+          if (!bar || !diagMicStream) return;
+          analyser.getByteFrequencyData(dataArr);
+          let sum = 0;
+          for (let i = 0; i < dataArr.length; i++) sum += dataArr[i];
+          const avg = Math.min(100, Math.round((sum / dataArr.length) * 2.2));
+          bar.style.width = `${avg}%`;
+          diagAnimFrame = requestAnimationFrame(tickMeter);
+        };
+        tickMeter();
+      } catch (err) {
+        setCheck('mic', 'err', 'Bloqueado! Clique no cadeado ao lado do link na barra de endereço e mude Microfone para Permitir.');
+      }
+
+      // 4. Testar Rota WebRTC (Direta P2P vs Relay / Bloqueio de Wi-Fi)
+      setCheck('webrtc', 'loading', 'Testando portas UDP / STUN / TURN no seu roteador...');
+      try {
+        const testPc = new RTCPeerConnection(RTC_CONFIG);
+        testPc.createDataChannel('diag');
+        const foundTypes = new Set();
+
+        testPc.onicecandidate = (ev) => {
+          if (ev.candidate && ev.candidate.candidate) {
+            const c = ev.candidate.candidate;
+            if (c.includes('typ host')) foundTypes.add('host');
+            if (c.includes('typ srflx')) foundTypes.add('srflx');
+            if (c.includes('typ relay')) foundTypes.add('relay');
+          }
+        };
+
+        const offer = await testPc.createOffer();
+        await testPc.setLocalDescription(offer);
+
+        await new Promise(resolve => setTimeout(resolve, 2600));
+        testPc.close();
+
+        if (foundTypes.has('srflx') && foundTypes.has('relay')) {
+          setCheck('webrtc', 'ok', 'Excelente! Conexão direta (STUN) e ponte de emergência (TURN) liberadas.');
+        } else if (foundTypes.has('relay')) {
+          setCheck('webrtc', 'warn', 'Rede restrita (CGNAT/Wi-Fi): usando ponte TURN (pode dar 1-2s de delay).');
+        } else if (foundTypes.has('srflx')) {
+          setCheck('webrtc', 'ok', 'Conexão direta P2P liberada no seu roteador.');
+        } else {
+          setCheck('webrtc', 'err', 'Roteador/Firewall bloqueando WebRTC! Tente usar o 5G/4G do celular ou desativar VPN/Antivírus.');
+        }
+      } catch (e) {
+        setCheck('webrtc', 'err', 'Erro ao testar WebRTC neste navegador.');
+      }
+    };
+
+    window.openDiagnosticsModal = () => {
+      openModal(`
+        <div class="p-5 space-y-3.5 max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-white">🩺 Checklist de Verificação Inicial</h3>
+              <p class="text-xs text-[#949ba4]">Confirme se microfone, som e roteador estão liberados antes da call</p>
+            </div>
+            <button onclick="stopDiagnosticsMic(); closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+          </div>
+
+          <div class="space-y-2.5">
+            <!-- Item 1: HTTPS -->
+            <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white">1. Conexão Segura (HTTPS)</span>
+                <span id="diag-badge-https" class="px-2 py-0.5 rounded text-[11px] font-bold bg-[#35373c] text-[#b5bac1]">Aguardando</span>
+              </div>
+              <p id="diag-desc-https" class="text-[11px] text-[#949ba4] mt-1">Necessário para liberar áudio e vídeo no navegador.</p>
+            </div>
+
+            <!-- Item 2: Firebase -->
+            <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white">2. Servidor em Tempo Real (Firebase)</span>
+                <span id="diag-badge-firebase" class="px-2 py-0.5 rounded text-[11px] font-bold bg-[#35373c] text-[#b5bac1]">Aguardando</span>
+              </div>
+              <p id="diag-desc-firebase" class="text-[11px] text-[#949ba4] mt-1">Sincronização das salas, chat e sinalização da chamada.</p>
+            </div>
+
+            <!-- Item 3: Microfone -->
+            <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white">3. Microfone & Captação de Voz</span>
+                <span id="diag-badge-mic" class="px-2 py-0.5 rounded text-[11px] font-bold bg-[#35373c] text-[#b5bac1]">Aguardando</span>
+              </div>
+              <p id="diag-desc-mic" class="text-[11px] text-[#949ba4]">Fale perto do microfone para ver o nível abaixo subir.</p>
+              <div class="w-full h-2.5 bg-[#1e1f22] rounded-full overflow-hidden">
+                <div id="diag-mic-meter" class="h-full bg-[#23a55a] transition-all duration-75" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Item 4: Saída de Áudio -->
+            <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3 flex items-center justify-between gap-2">
+              <div>
+                <span class="text-xs font-bold text-white block">4. Saída de Áudio (Fone / Caixa)</span>
+                <p id="diag-speaker-status" class="text-[11px] text-[#949ba4] mt-0.5">Clique ao lado para tocar um som de teste.</p>
+              </div>
+              <button type="button" onclick="playDiagTestBeep()" class="px-3 py-1.5 rounded bg-[#383a40] hover:bg-[#5865f2] text-white text-xs font-semibold cursor-pointer shrink-0 transition">🔊 Ouvir Bip</button>
+            </div>
+
+            <!-- Item 5: Rota de Rede / Roteador -->
+            <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white">5. Roteador / Firewall (Sem Delay)</span>
+                <span id="diag-badge-webrtc" class="px-2 py-0.5 rounded text-[11px] font-bold bg-[#35373c] text-[#b5bac1]">Aguardando</span>
+              </div>
+              <p id="diag-desc-webrtc" class="text-[11px] text-[#949ba4] mt-1">Verifica se seu Wi-Fi bloqueia conexão direta P2P.</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-2 border-t border-[#26272d]">
+            <button type="button" onclick="runFullDiagnostics()" class="px-3.5 py-2 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">🔄 Rodar Teste Novamente</button>
+            <button type="button" onclick="stopDiagnosticsMic(); closeModal()" class="px-4 py-2 rounded bg-[#23a55a] hover:bg-[#1a8245] text-white text-xs font-semibold cursor-pointer">Tudo Pronto</button>
+          </div>
+        </div>
+      `);
+      setTimeout(() => runFullDiagnostics(), 150);
+    };
+
+    // =========================================================================
     // ÁUDIO DE INTERFACE & UTILITÁRIOS
     // =========================================================================
     let audioCtx = null;
@@ -816,7 +1049,7 @@
           authorName: 'FubasCord Bot',
           authorEmoji: '🤖',
           authorColor: '#5865f2',
-          text: 'Bem-vindos ao **FubasCord**! Entrem na **Sala Principal** para conversar por voz e clique em **Compartilhar Tela** quando quiser abrir uma live.',
+          text: 'Bem-vindos ao **FubasCord**! Clique em **🩺 Checklist** no topo se quiser testar seu microfone e conexão antes de entrar na **Sala Principal**.',
           timestamp: Date.now()
         });
       }
@@ -1050,7 +1283,7 @@
         usersMap[username] = userData;
       }
 
-      completeSignIn(userData);
+      completeSignIn(userData, true);
       showToast(isFirstUser
         ? `Conta Admin criada! Código de convite ativo: ${expectedCode}`
         : `Conta criada! Bem-vindo ao FubasCord, ${name}!`);
@@ -1089,11 +1322,12 @@
         await updateDoc(docPath('users', username), { status: 'online', lastSeen: Date.now() });
       }
 
-      completeSignIn(foundUser);
+      const isFirstDeviceVisit = !localStorage.getItem('fubascord_diag_done');
+      completeSignIn(foundUser, isFirstDeviceVisit);
       showToast(`Bem-vindo de volta, ${foundUser.name}!`);
     };
 
-    function completeSignIn(user) {
+    function completeSignIn(user, openChecklist = false) {
       const normalized = { ...user, username: normUser(user.username) };
       currentUser = normalized;
       usersMap[normalized.username] = normalized;
@@ -1101,6 +1335,11 @@
       document.getElementById('auth-screen').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
       renderAll();
+
+      if (openChecklist) {
+        localStorage.setItem('fubascord_diag_done', '1');
+        setTimeout(() => openDiagnosticsModal(), 300);
+      }
     }
 
     async function restoreSavedSession() {
@@ -1117,7 +1356,7 @@
           u.username = uname;
           u.status = 'online';
           if (isCloudReady) await updateDoc(docPath('users', uname), { status: 'online', lastSeen: Date.now() });
-          completeSignIn(u);
+          completeSignIn(u, false);
         }
       } catch (e) {}
     }
@@ -1138,7 +1377,7 @@
     };
 
     // =========================================================================
-    // WEBRTC REAL (TURN RELAY REDUNDANTE + RESSINCRONIZAÇÃO DE TELA)
+    // WEBRTC REAL (BAIXA LATÊNCIA + TURN RELAY REDUNDANTE + RESSINCRONIZAÇÃO)
     // =========================================================================
     const RTC_CONFIG = {
       iceServers: [
@@ -1183,14 +1422,16 @@
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
-            autoGainControl: true
+            autoGainControl: true,
+            channelCount: 1,
+            latency: 0.01
           },
           video: false
         });
         localMicStream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
         return localMicStream;
       } catch (err) {
-        showToast('Microfone não permitido ou indisponível (entrando como ouvinte).');
+        showToast('Microfone não permitido! Abra o 🩺 Checklist no topo para liberar.');
         return null;
       }
     }
@@ -1319,7 +1560,6 @@
       const me = normUser(currentUser.username);
       if (peerUsername === me) return;
 
-      // Se o espectador pedir ressincronização da tela, recria a conexão limpa com a tela anexada
       if (sig.type === 'request-stream') {
         if (isSharingScreen && localScreenStream) {
           destroyPeerEntry(peerUsername);
@@ -2234,7 +2474,10 @@
       document.getElementById('modal-overlay').classList.remove('hidden');
     }
 
-    window.closeModal = () => document.getElementById('modal-overlay').classList.add('hidden');
+    window.closeModal = () => {
+      stopDiagnosticsMic();
+      document.getElementById('modal-overlay').classList.add('hidden');
+    };
     window.closeModalOnBackdrop = (e) => { if (e.target.id === 'modal-overlay') closeModal(); };
 
     window.openNetworkModal = () => {
