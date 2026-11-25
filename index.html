@@ -86,7 +86,6 @@
 
       <!-- Formulário de Cadastro -->
       <form id="form-register" onsubmit="handleRegister(event)" class="hidden p-6 pt-4 space-y-3">
-        <!-- Aviso quando cadastros estão bloqueados pelo Admin -->
         <div id="register-closed-banner" class="hidden bg-[#f23f43]/15 border border-[#f23f43]/40 rounded-lg p-3.5 text-center space-y-1">
           <p class="text-sm font-bold text-[#f23f43]">🔒 Novos cadastros fechados</p>
           <p class="text-xs text-[#dbdee1]">O administrador trancou a criação de novas contas neste grupo. Se você já tem conta, use a aba <strong>Entrar</strong>.</p>
@@ -222,7 +221,6 @@
             <p id="active-channel-topic" class="hidden sm:block text-xs text-[#949ba4] truncate">Bate-papo principal da galera</p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <!-- Indicador de Rede / Backup -->
             <button onclick="openNetworkModal()" title="Status de Rede, Segurança e Backup (GitHub / PC)" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#232428] hover:bg-[#1e1f22] text-[#dbdee1] border border-[#3f4147] cursor-pointer transition">
               <span id="net-pill-dot" class="w-2 h-2 rounded-full bg-[#23a55a]"></span>
               <span id="net-pill-label" class="hidden sm:inline">Rede OK</span>
@@ -292,7 +290,6 @@
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <!-- Status de Rede / Anti-Travamento na Call -->
             <button onclick="openNetworkModal()" title="Monitor de Rede e Anti-Travamento" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#232428] hover:bg-[#2b2d31] text-[#dbdee1] border border-[#35373c] cursor-pointer transition">
               <span id="stage-net-dot" class="w-2 h-2 rounded-full bg-[#23a55a]"></span>
               <span id="stage-net-ping" class="text-[11px]">--ms</span>
@@ -304,13 +301,14 @@
         </header>
 
         <div class="flex-1 p-3 sm:p-4 flex flex-col gap-3 overflow-y-auto min-h-0">
-          <!-- Player da Transmissão Ao Vivo (aberto SOMENTE ao assistir ou transmitir) -->
+          <!-- Player da Transmissão Ao Vivo -->
           <div id="live-player-box" class="hidden stage-wrapper relative w-full flex-1 min-h-[240px] bg-black rounded-xl overflow-hidden border border-[#2b2d31] shadow-2xl flex items-center justify-center">
             <video id="stage-video" autoplay playsinline class="w-full h-full object-contain bg-black"></video>
             <div id="stage-waiting-overlay" class="hidden absolute inset-0 bg-[#18191c]/90 flex flex-col items-center justify-center p-4 text-center">
               <div class="w-10 h-10 border-4 border-[#5865f2] border-t-transparent rounded-full animate-spin mb-3"></div>
               <p id="stage-waiting-text" class="text-sm font-semibold text-white">Conectando à transmissão de tela...</p>
-              <p class="text-xs text-[#949ba4] mt-1">Estabelecendo conexão direta ponto a ponto (WebRTC)</p>
+              <p class="text-xs text-[#949ba4] mt-1">Sincronizando vídeo direto com o transmissor</p>
+              <button onclick="retryWatchStream()" class="mt-3 px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">🔄 Reconectar Vídeo</button>
             </div>
             <div class="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
               <span class="flex items-center gap-1.5 bg-[#f23f43] text-white text-[11px] font-extrabold uppercase px-2.5 py-1 rounded shadow">
@@ -360,7 +358,7 @@
     <aside id="members-drawer" class="fixed md:static inset-y-0 right-0 z-40 w-60 bg-[#2b2d31] overflow-y-auto px-3 py-4 shrink-0 transform translate-x-full md:translate-x-0 transition-transform duration-200 border-l border-[#1f2023] md:border-none"></aside>
   </div>
 
-  <!-- Contêiner oculto APENAS para áudio dos microfones dos amigos (nunca da tela) -->
+  <!-- Contêiner oculto APENAS para áudio dos microfones dos amigos -->
   <div id="remote-audio-pool" class="hidden"></div>
 
   <!-- MODAL GENÉRICO -->
@@ -414,6 +412,7 @@
     let usersMap = {};
     let serversMap = {};
     let messagesList = [];
+    let rawVoiceStates = {};
     let voiceStatesMap = {};
 
     let activeServerId = 'srv-geral';
@@ -432,7 +431,8 @@
     let selectedRegEmoji = '😎';
     let selectedRegColor = '#5865f2';
 
-    // Segurança e Controle de Cadastros (sincronizados no Firestore)
+    let presenceHeartbeatTimer = null;
+
     let securityConfig = {
       registrationsOpen: true,
       inviteCode: DEFAULT_INVITE_CODE,
@@ -462,8 +462,68 @@
 
     let networkMonitorTimer = null;
 
+    function normUser(u) {
+      return String(u || '').trim().toLowerCase();
+    }
+
     function isCurrentUserAdmin() {
       return Boolean(currentUser && currentUser.isAdmin === true);
+    }
+
+    // Filtra estados fantasmas de usuários que fecharam o navegador sem clicar em desconectar
+    function rebuildActiveVoiceStates() {
+      const now = Date.now();
+      const filtered = {};
+      Object.entries(rawVoiceStates).forEach(([key, state]) => {
+        if (!state || !state.channelId) return;
+        const uRecord = usersMap[key];
+        const lastSeen = state.lastPing || state.joinedAt || 0;
+        const isStale = lastSeen > 0 && (now - lastSeen) > 25000;
+        const isUserOffline = uRecord && uRecord.status === 'offline' && isStale;
+
+        if (isStale || isUserOffline) {
+          // Limpa registro fantasma no Firestore para todos os clientes
+          if (isCloudReady && currentUser && key !== normUser(currentUser.username)) {
+            deleteDoc(docPath('voiceStates', key)).catch(() => {});
+          }
+          return;
+        }
+        filtered[key] = state;
+      });
+      voiceStatesMap = filtered;
+    }
+
+    function startPresenceHeartbeat() {
+      if (presenceHeartbeatTimer) clearInterval(presenceHeartbeatTimer);
+      presenceHeartbeatTimer = setInterval(async () => {
+        if (!currentUser || !isCloudReady) return;
+        const me = normUser(currentUser.username);
+        const now = Date.now();
+
+        updateDoc(docPath('users', me), { status: currentUser.status || 'online', lastSeen: now }).catch(() => {});
+
+        if (connectedVoiceChannelId) {
+          setDoc(docPath('voiceStates', me), {
+            username: me,
+            name: currentUser.name,
+            emoji: currentUser.emoji,
+            color: currentUser.color,
+            serverId: activeServerId,
+            channelId: connectedVoiceChannelId,
+            isMuted,
+            isDeafened,
+            isStreaming: isSharingScreen,
+            lastPing: now
+          }, { merge: true }).catch(() => {});
+        }
+
+        rebuildActiveVoiceStates();
+        if (connectedVoiceChannelId) syncWebRTCPeers();
+        renderChannels();
+        renderMembers();
+        renderVoiceStage();
+        updateLiveJumpBanner();
+      }, 8000);
     }
 
     function updateNetworkBadges() {
@@ -559,7 +619,8 @@
       let totalPackets = 0;
 
       for (const peerId of peerIds) {
-        const pc = peerConnections[peerId];
+        const entry = peerConnections[peerId];
+        const pc = entry?.pc;
         if (!pc) continue;
 
         if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
@@ -670,9 +731,6 @@
       return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // =========================================================================
-    // CONTROLE DE CADASTROS FECHADOS / CÓDIGO DE CONVITE NA TELA DE AUTH
-    // =========================================================================
     function applyRegistrationLockUI() {
       const closedBanner = document.getElementById('register-closed-banner');
       const fieldsWrap = document.getElementById('register-fields-wrap');
@@ -727,6 +785,7 @@
           await ensureSecuritySettings();
           startRealtimeListeners();
           startNetworkMonitor();
+          startPresenceHeartbeat();
           restoreSavedSession();
         });
       } catch (err) {
@@ -784,7 +843,6 @@
     }
 
     function startRealtimeListeners() {
-      // 0. Configurações de segurança (bloqueio de cadastro e código de convite)
       onSnapshot(docPath('settings', 'security'), (snap) => {
         if (snap.exists()) {
           const d = snap.data();
@@ -797,7 +855,6 @@
         }
       });
 
-      // 0.5 Configuração de Rede compartilhada (GitHub / PC Backup)
       onSnapshot(docPath('settings', 'network'), (snap) => {
         if (snap.exists()) {
           const data = snap.data();
@@ -806,20 +863,26 @@
         }
       });
 
-      // 1. Usuários cadastrados e status online
       onSnapshot(colPath('users'), (snap) => {
         usersMap = {};
-        snap.forEach(d => { usersMap[d.id] = d.data(); });
+        snap.forEach(d => {
+          const u = d.data();
+          const key = normUser(u.username || d.id);
+          usersMap[key] = { ...u, username: key };
+        });
         applyRegistrationLockUI();
-        if (currentUser && usersMap[currentUser.username]) {
-          currentUser = usersMap[currentUser.username];
-          renderMeBar();
+        rebuildActiveVoiceStates();
+        if (currentUser) {
+          const meKey = normUser(currentUser.username);
+          if (usersMap[meKey]) {
+            currentUser = usersMap[meKey];
+            renderMeBar();
+          }
         }
         renderMembers();
         renderChannels();
       });
 
-      // 2. Servidores e canais
       onSnapshot(colPath('servers'), (snap) => {
         serversMap = {};
         snap.forEach(d => { serversMap[d.id] = d.data(); });
@@ -831,7 +894,6 @@
         renderChannels();
       });
 
-      // 3. Mensagens em tempo real
       onSnapshot(colPath('messages'), (snap) => {
         const list = [];
         snap.forEach(d => list.push({ id: d.id, ...d.data() }));
@@ -840,19 +902,24 @@
         renderMessages();
       });
 
-      // 4. Participantes conectados em salas de voz e lives ativas
       onSnapshot(colPath('voiceStates'), (snap) => {
-        const prevMap = { ...voiceStatesMap };
-        voiceStatesMap = {};
-        snap.forEach(d => { voiceStatesMap[d.id] = d.data(); });
+        rawVoiceStates = {};
+        snap.forEach(d => {
+          const v = d.data();
+          const key = normUser(v.username || d.id);
+          rawVoiceStates[key] = { ...v, username: key };
+        });
+        rebuildActiveVoiceStates();
 
         if (watchingStreamId && (!voiceStatesMap[watchingStreamId] || !voiceStatesMap[watchingStreamId].isStreaming)) {
           showToast('A transmissão de tela foi encerrada.');
           watchingStreamId = null;
+          const videoEl = document.getElementById('stage-video');
+          if (videoEl) videoEl.srcObject = null;
         }
 
         if (connectedVoiceChannelId && currentUser) {
-          syncWebRTCPeers(prevMap);
+          syncWebRTCPeers();
         }
 
         renderChannels();
@@ -861,23 +928,26 @@
         updateLiveJumpBanner();
       });
 
-      // 5. Sinalização WebRTC (Offers, Answers, ICE Candidates)
       onSnapshot(colPath('webrtcSignals'), (snap) => {
         if (!currentUser) return;
+        const me = normUser(currentUser.username);
         snap.docChanges().forEach(async (change) => {
           if (change.type !== 'added') return;
           const sig = change.doc.data();
-          if (sig.to !== currentUser.username) return;
+          if (normUser(sig.to) !== me) return;
           await handleIncomingSignal(change.doc.id, sig);
         });
       });
 
-      window.addEventListener('beforeunload', () => {
+      const cleanupOnLeave = () => {
         if (currentUser && isCloudReady) {
-          updateDoc(docPath('users', currentUser.username), { status: 'offline' }).catch(() => {});
-          deleteDoc(docPath('voiceStates', currentUser.username)).catch(() => {});
+          const me = normUser(currentUser.username);
+          updateDoc(docPath('users', me), { status: 'offline' }).catch(() => {});
+          deleteDoc(docPath('voiceStates', me)).catch(() => {});
         }
-      });
+      };
+      window.addEventListener('pagehide', cleanupOnLeave);
+      window.addEventListener('beforeunload', cleanupOnLeave);
     }
 
     function seedLocalFallback() {
@@ -938,7 +1008,7 @@
       }
 
       const name = document.getElementById('reg-name').value.trim();
-      const username = document.getElementById('reg-username').value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+      const username = normUser(document.getElementById('reg-username').value).replace(/[^a-z0-9._-]/g, '');
       const password = document.getElementById('reg-password').value;
 
       if (!name || username.length < 2) {
@@ -958,7 +1028,8 @@
         color: selectedRegColor,
         status: 'online',
         isAdmin: isFirstUser,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        lastSeen: Date.now()
       };
 
       if (isCloudReady) {
@@ -990,7 +1061,7 @@
       const errEl = document.getElementById('login-error');
       errEl.classList.add('hidden');
 
-      const username = document.getElementById('login-username').value.trim().toLowerCase();
+      const username = normUser(document.getElementById('login-username').value);
       const password = document.getElementById('login-password').value;
       const passwordHash = await hashPassword(password);
 
@@ -1012,9 +1083,10 @@
         return;
       }
 
+      foundUser.username = username;
       foundUser.status = 'online';
       if (isCloudReady) {
-        await updateDoc(docPath('users', username), { status: 'online' });
+        await updateDoc(docPath('users', username), { status: 'online', lastSeen: Date.now() });
       }
 
       completeSignIn(foundUser);
@@ -1022,9 +1094,10 @@
     };
 
     function completeSignIn(user) {
-      currentUser = user;
-      usersMap[user.username] = user;
-      localStorage.setItem('fubascord_session', JSON.stringify({ username: user.username, passwordHash: user.passwordHash }));
+      const normalized = { ...user, username: normUser(user.username) };
+      currentUser = normalized;
+      usersMap[normalized.username] = normalized;
+      localStorage.setItem('fubascord_session', JSON.stringify({ username: normalized.username, passwordHash: normalized.passwordHash }));
       document.getElementById('auth-screen').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
       renderAll();
@@ -1034,14 +1107,16 @@
       try {
         const saved = JSON.parse(localStorage.getItem('fubascord_session') || 'null');
         if (!saved || !saved.username) return;
-        let u = usersMap[saved.username];
+        const uname = normUser(saved.username);
+        let u = usersMap[uname];
         if (!u && isCloudReady) {
-          const snap = await getDoc(docPath('users', saved.username));
+          const snap = await getDoc(docPath('users', uname));
           if (snap.exists()) u = snap.data();
         }
         if (u && u.passwordHash === saved.passwordHash) {
+          u.username = uname;
           u.status = 'online';
-          if (isCloudReady) await updateDoc(docPath('users', u.username), { status: 'online' });
+          if (isCloudReady) await updateDoc(docPath('users', uname), { status: 'online', lastSeen: Date.now() });
           completeSignIn(u);
         }
       } catch (e) {}
@@ -1050,7 +1125,9 @@
     window.logoutUser = async () => {
       if (connectedVoiceChannelId) await disconnectVoice();
       if (currentUser && isCloudReady) {
-        await updateDoc(docPath('users', currentUser.username), { status: 'offline' }).catch(() => {});
+        const me = normUser(currentUser.username);
+        await updateDoc(docPath('users', me), { status: 'offline' }).catch(() => {});
+        await deleteDoc(docPath('voiceStates', me)).catch(() => {});
       }
       localStorage.removeItem('fubascord_session');
       currentUser = null;
@@ -1061,14 +1138,34 @@
     };
 
     // =========================================================================
-    // WEBRTC REAL (ÁUDIO DO MICROFONE SEPARADO DA TELA + ZERO ECO)
+    // WEBRTC REAL (TURN RELAY REDUNDANTE + RESSINCRONIZAÇÃO DE TELA)
     // =========================================================================
     const RTC_CONFIG = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' }
-      ]
+        {
+          urls: 'turn:a.relay.metered.ca:80',
+          username: 'e8dd65b92f62d3e36cae59e7',
+          credential: '2y3+2W5hA1N6d7u/'
+        },
+        {
+          urls: 'turn:a.relay.metered.ca:80?transport=tcp',
+          username: 'e8dd65b92f62d3e36cae59e7',
+          credential: '2y3+2W5hA1N6d7u/'
+        },
+        {
+          urls: 'turn:a.relay.metered.ca:443',
+          username: 'e8dd65b92f62d3e36cae59e7',
+          credential: '2y3+2W5hA1N6d7u/'
+        },
+        {
+          urls: 'turns:a.relay.metered.ca:443?transport=tcp',
+          username: 'e8dd65b92f62d3e36cae59e7',
+          credential: '2y3+2W5hA1N6d7u/'
+        }
+      ],
+      iceCandidatePoolSize: 6
     };
 
     let localMicStream = null;
@@ -1078,7 +1175,9 @@
     let processedSignals = new Set();
 
     async function acquireMicrophone() {
-      if (localMicStream) return localMicStream;
+      if (localMicStream && localMicStream.getAudioTracks().some(t => t.readyState === 'live')) {
+        return localMicStream;
+      }
       try {
         localMicStream = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -1088,7 +1187,7 @@
           },
           video: false
         });
-        localMicStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+        localMicStream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
         return localMicStream;
       } catch (err) {
         showToast('Microfone não permitido ou indisponível (entrando como ouvinte).');
@@ -1096,28 +1195,74 @@
       }
     }
 
-    function createPeerConnection(peerUsername) {
+    function destroyPeerEntry(rawPeerUsername) {
+      const peerUsername = normUser(rawPeerUsername);
       if (peerConnections[peerUsername]) {
-        peerConnections[peerUsername].close();
+        try { peerConnections[peerUsername].pc.close(); } catch (e) {}
+        delete peerConnections[peerUsername];
       }
+      delete remoteStreams[peerUsername];
+      const audioEl = document.getElementById('remote-audio-' + peerUsername);
+      if (audioEl) audioEl.remove();
+    }
+
+    function ensurePeerEntry(rawPeerUsername) {
+      const peerUsername = normUser(rawPeerUsername);
+      if (peerConnections[peerUsername]) return peerConnections[peerUsername];
+
       const pc = new RTCPeerConnection(RTC_CONFIG);
-      peerConnections[peerUsername] = pc;
-      remoteStreams[peerUsername] = { audio: new MediaStream(), screen: new MediaStream() };
+      const entry = {
+        pc,
+        makingOffer: false,
+        ignoreOffer: false,
+        screenVideoSender: null,
+        screenAudioSender: null
+      };
+      peerConnections[peerUsername] = entry;
+      remoteStreams[peerUsername] = {
+        audio: new MediaStream(),
+        screen: new MediaStream()
+      };
 
       if (localMicStream) {
-        localMicStream.getAudioTracks().forEach(track => pc.addTrack(track, localMicStream));
-      }
-      if (isSharingScreen && localScreenStream) {
-        localScreenStream.getTracks().forEach(track => pc.addTrack(track, localScreenStream));
+        localMicStream.getAudioTracks().forEach(track => {
+          pc.addTrack(track, localMicStream);
+        });
       }
 
-      pc.onicecandidate = async (event) => {
-        if (event.candidate && isCloudReady && currentUser) {
+      if (isSharingScreen && localScreenStream) {
+        const vTrack = localScreenStream.getVideoTracks()[0];
+        if (vTrack) entry.screenVideoSender = pc.addTrack(vTrack, localScreenStream);
+        const aTrack = localScreenStream.getAudioTracks()[0];
+        if (aTrack) entry.screenAudioSender = pc.addTrack(aTrack, localScreenStream);
+      }
+
+      pc.onnegotiationneeded = async () => {
+        try {
+          if (!isCloudReady || !currentUser || !connectedVoiceChannelId) return;
+          entry.makingOffer = true;
+          await pc.setLocalDescription();
           await addDoc(colPath('webrtcSignals'), {
-            from: currentUser.username,
+            from: normUser(currentUser.username),
+            to: peerUsername,
+            type: 'description',
+            description: JSON.stringify(pc.localDescription),
+            timestamp: Date.now()
+          });
+        } catch (err) {
+          console.warn('Negotiation error:', err);
+        } finally {
+          entry.makingOffer = false;
+        }
+      };
+
+      pc.onicecandidate = async ({ candidate }) => {
+        if (candidate && isCloudReady && currentUser) {
+          await addDoc(colPath('webrtcSignals'), {
+            from: normUser(currentUser.username),
             to: peerUsername,
             type: 'candidate',
-            candidate: JSON.stringify(event.candidate),
+            candidate: JSON.stringify(candidate),
             timestamp: Date.now()
           });
         }
@@ -1126,44 +1271,42 @@
       pc.ontrack = (event) => {
         const track = event.track;
         const incomingStream = event.streams && event.streams[0];
-        const isScreenTrack = track.kind === 'video' || (incomingStream && incomingStream.getVideoTracks().length > 0);
+        const isScreen = track.kind === 'video' || (incomingStream && incomingStream.getVideoTracks().length > 0);
 
-        if (isScreenTrack) {
-          if (!remoteStreams[peerUsername].screen.getTracks().some(t => t.id === track.id)) {
-            remoteStreams[peerUsername].screen.addTrack(track);
+        if (isScreen) {
+          const targetScreen = remoteStreams[peerUsername].screen;
+          targetScreen.getTracks().filter(t => t.kind === track.kind && t.id !== track.id).forEach(old => targetScreen.removeTrack(old));
+          if (!targetScreen.getTracks().some(t => t.id === track.id)) {
+            targetScreen.addTrack(track);
           }
+          track.onunmute = () => {
+            if (watchingStreamId === peerUsername) {
+              attachStreamToStage(targetScreen, peerUsername);
+            }
+          };
+          track.onended = () => {
+            targetScreen.removeTrack(track);
+          };
           if (watchingStreamId === peerUsername) {
-            attachStreamToStage(remoteStreams[peerUsername].screen, peerUsername);
+            attachStreamToStage(targetScreen, peerUsername);
           }
         } else if (track.kind === 'audio') {
-          if (!remoteStreams[peerUsername].audio.getTracks().some(t => t.id === track.id)) {
-            remoteStreams[peerUsername].audio.addTrack(track);
+          const targetAudio = remoteStreams[peerUsername].audio;
+          targetAudio.getAudioTracks().filter(t => t.id !== track.id).forEach(old => targetAudio.removeTrack(old));
+          if (!targetAudio.getTracks().some(t => t.id === track.id)) {
+            targetAudio.addTrack(track);
           }
-          attachRemoteVoiceAudio(peerUsername, remoteStreams[peerUsername].audio);
+          attachRemoteVoiceAudio(peerUsername, targetAudio);
         }
       };
 
-      pc.onconnectionstatechange = () => {
-        if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
-          delete peerConnections[peerUsername];
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'failed') {
+          try { pc.restartIce(); } catch (e) {}
         }
       };
 
-      return pc;
-    }
-
-    async function callPeer(peerUsername) {
-      if (!isCloudReady || !currentUser) return;
-      const pc = createPeerConnection(peerUsername);
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      await addDoc(colPath('webrtcSignals'), {
-        from: currentUser.username,
-        to: peerUsername,
-        type: 'offer',
-        sdp: offer.sdp,
-        timestamp: Date.now()
-      });
+      return entry;
     }
 
     async function handleIncomingSignal(signalId, sig) {
@@ -1171,31 +1314,50 @@
       processedSignals.add(signalId);
       deleteDoc(docPath('webrtcSignals', signalId)).catch(() => {});
 
-      if (!connectedVoiceChannelId) return;
-      const peerUsername = sig.from;
+      if (!connectedVoiceChannelId || !currentUser) return;
+      const peerUsername = normUser(sig.from);
+      const me = normUser(currentUser.username);
+      if (peerUsername === me) return;
+
+      // Se o espectador pedir ressincronização da tela, recria a conexão limpa com a tela anexada
+      if (sig.type === 'request-stream') {
+        if (isSharingScreen && localScreenStream) {
+          destroyPeerEntry(peerUsername);
+          ensurePeerEntry(peerUsername);
+        }
+        return;
+      }
+
+      const entry = ensurePeerEntry(peerUsername);
+      const pc = entry.pc;
+      const polite = me < peerUsername;
 
       try {
-        if (sig.type === 'offer') {
-          const pc = createPeerConnection(peerUsername);
-          await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: sig.sdp }));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          await addDoc(colPath('webrtcSignals'), {
-            from: currentUser.username,
-            to: peerUsername,
-            type: 'answer',
-            sdp: answer.sdp,
-            timestamp: Date.now()
-          });
-        } else if (sig.type === 'answer') {
-          const pc = peerConnections[peerUsername];
-          if (pc && pc.signalingState === 'have-local-offer') {
-            await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: sig.sdp }));
+        if (sig.type === 'description' || sig.type === 'offer' || sig.type === 'answer') {
+          const description = sig.description
+            ? new RTCSessionDescription(JSON.parse(sig.description))
+            : new RTCSessionDescription({ type: sig.type, sdp: sig.sdp });
+
+          const offerCollision = description.type === 'offer' && (entry.makingOffer || pc.signalingState !== 'stable');
+          entry.ignoreOffer = !polite && offerCollision;
+          if (entry.ignoreOffer) return;
+
+          await pc.setRemoteDescription(description);
+          if (description.type === 'offer') {
+            await pc.setLocalDescription();
+            await addDoc(colPath('webrtcSignals'), {
+              from: me,
+              to: peerUsername,
+              type: 'description',
+              description: JSON.stringify(pc.localDescription),
+              timestamp: Date.now()
+            });
           }
-        } else if (sig.type === 'candidate') {
-          const pc = peerConnections[peerUsername];
-          if (pc && sig.candidate) {
+        } else if (sig.type === 'candidate' && sig.candidate) {
+          try {
             await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(sig.candidate)));
+          } catch (err) {
+            if (!entry.ignoreOffer) console.warn('ICE candidate error:', err);
           }
         }
       } catch (err) {
@@ -1203,44 +1365,46 @@
       }
     }
 
-    function syncWebRTCPeers(prevMap) {
+    function syncWebRTCPeers() {
+      const me = normUser(currentUser.username);
       const roomPeers = Object.values(voiceStatesMap)
-        .filter(v => v.channelId === connectedVoiceChannelId && v.username !== currentUser.username)
-        .map(v => v.username);
+        .filter(v => v.channelId === connectedVoiceChannelId && normUser(v.username) !== me)
+        .map(v => normUser(v.username));
 
       Object.keys(peerConnections).forEach(existing => {
         if (!roomPeers.includes(existing)) {
-          peerConnections[existing].close();
-          delete peerConnections[existing];
-          delete remoteStreams[existing];
-          const audioEl = document.getElementById('remote-audio-' + existing);
-          if (audioEl) audioEl.remove();
+          destroyPeerEntry(existing);
         }
       });
 
       roomPeers.forEach(peer => {
-        if (!peerConnections[peer] && currentUser.username < peer) {
-          callPeer(peer);
+        if (!peerConnections[peer] && me < peer) {
+          ensurePeerEntry(peer);
         }
       });
     }
 
     function attachRemoteVoiceAudio(peerUsername, stream) {
-      if (currentUser && peerUsername === currentUser.username) return;
+      if (currentUser && peerUsername === normUser(currentUser.username)) return;
       const pool = document.getElementById('remote-audio-pool');
       let audioEl = document.getElementById('remote-audio-' + peerUsername);
       if (!audioEl) {
         audioEl = document.createElement('audio');
         audioEl.id = 'remote-audio-' + peerUsername;
         audioEl.autoplay = true;
+        audioEl.playsInline = true;
         pool.appendChild(audioEl);
       }
       audioEl.srcObject = stream;
       audioEl.muted = isDeafened;
+      audioEl.volume = 1.0;
+      audioEl.play().catch(() => {
+        showToast('Clique na tela para liberar o áudio da chamada.');
+      });
     }
 
     function closeAllWebRTC() {
-      Object.values(peerConnections).forEach(pc => pc.close());
+      Object.keys(peerConnections).forEach(k => destroyPeerEntry(k));
       peerConnections = {};
       remoteStreams = {};
       document.getElementById('remote-audio-pool').innerHTML = '';
@@ -1254,13 +1418,6 @@
       }
     }
 
-    async function renegotiateAllPeers() {
-      const peers = Object.keys(peerConnections);
-      for (const peer of peers) {
-        await callPeer(peer);
-      }
-    }
-
     // =========================================================================
     // SALA DE VOZ & COMPARTILHAMENTO DE TELA AO VIVO
     // =========================================================================
@@ -1270,26 +1427,34 @@
       const ch = srv?.channels?.find(c => c.id === channelId);
       if (!ch) return;
 
+      const me = normUser(currentUser.username);
       const wasConnected = connectedVoiceChannelId === channelId;
       connectedVoiceChannelId = channelId;
       voiceViewMode = 'voice';
       watchingStreamId = null;
 
       await acquireMicrophone();
+      document.querySelectorAll('#remote-audio-pool audio').forEach(a => a.play().catch(() => {}));
+
+      const now = Date.now();
+      const myState = {
+        username: me,
+        name: currentUser.name,
+        emoji: currentUser.emoji,
+        color: currentUser.color,
+        serverId: activeServerId,
+        channelId: channelId,
+        isMuted,
+        isDeafened,
+        isStreaming: isSharingScreen,
+        joinedAt: now,
+        lastPing: now
+      };
+      rawVoiceStates[me] = myState;
+      rebuildActiveVoiceStates();
 
       if (isCloudReady) {
-        await setDoc(docPath('voiceStates', currentUser.username), {
-          username: currentUser.username,
-          name: currentUser.name,
-          emoji: currentUser.emoji,
-          color: currentUser.color,
-          serverId: activeServerId,
-          channelId: channelId,
-          isMuted,
-          isDeafened,
-          isStreaming: isSharingScreen,
-          joinedAt: Date.now()
-        });
+        await setDoc(docPath('voiceStates', me), myState);
       }
 
       document.getElementById('voice-connected-panel').classList.remove('hidden');
@@ -1301,6 +1466,7 @@
         showToast(`Conectado por voz em ${ch.name}`);
       }
 
+      syncWebRTCPeers();
       closeMobileDrawers();
       renderChannels();
       renderVoiceStage();
@@ -1309,8 +1475,13 @@
     window.disconnectVoice = async () => {
       if (isSharingScreen) await stopScreenShare(true);
       closeAllWebRTC();
-      if (currentUser && isCloudReady) {
-        await deleteDoc(docPath('voiceStates', currentUser.username)).catch(() => {});
+      if (currentUser) {
+        const me = normUser(currentUser.username);
+        delete rawVoiceStates[me];
+        rebuildActiveVoiceStates();
+        if (isCloudReady) {
+          await deleteDoc(docPath('voiceStates', me)).catch(() => {});
+        }
       }
       connectedVoiceChannelId = null;
       watchingStreamId = null;
@@ -1338,7 +1509,8 @@
       renderVoiceStage();
     };
 
-    window.watchMemberStream = async (streamerUsername) => {
+    window.watchMemberStream = async (rawStreamerUsername) => {
+      const streamerUsername = normUser(rawStreamerUsername);
       const state = voiceStatesMap[streamerUsername];
       if (!state || !state.isStreaming) return;
       if (connectedVoiceChannelId !== state.channelId) {
@@ -1349,11 +1521,30 @@
       renderChannels();
       renderVoiceStage();
 
-      if (streamerUsername === currentUser.username && localScreenStream) {
-        attachStreamToStage(localScreenStream, currentUser.username);
-      } else if (remoteStreams[streamerUsername] && remoteStreams[streamerUsername].screen.getVideoTracks().length > 0) {
+      const me = normUser(currentUser.username);
+      if (streamerUsername === me && localScreenStream) {
+        attachStreamToStage(localScreenStream, me);
+      } else if (remoteStreams[streamerUsername] && remoteStreams[streamerUsername].screen.getVideoTracks().some(t => t.readyState === 'live')) {
         attachStreamToStage(remoteStreams[streamerUsername].screen, streamerUsername);
+      } else {
+        await retryWatchStream();
       }
+    };
+
+    window.retryWatchStream = async () => {
+      if (!watchingStreamId || !currentUser || !isCloudReady) return;
+      const me = normUser(currentUser.username);
+      if (watchingStreamId === me) return;
+
+      destroyPeerEntry(watchingStreamId);
+      document.getElementById('stage-waiting-overlay').classList.remove('hidden');
+
+      await addDoc(colPath('webrtcSignals'), {
+        from: me,
+        to: watchingStreamId,
+        type: 'request-stream',
+        timestamp: Date.now()
+      });
     };
 
     window.jumpToActiveLive = () => {
@@ -1361,10 +1552,11 @@
       if (liveUser) watchMemberStream(liveUser.username);
     };
 
-    function attachStreamToStage(stream, streamerUsername) {
+    function attachStreamToStage(stream, rawStreamerUsername) {
+      const streamerUsername = normUser(rawStreamerUsername);
       const videoEl = document.getElementById('stage-video');
       const waitingEl = document.getElementById('stage-waiting-overlay');
-      const isSelf = currentUser && streamerUsername === currentUser.username;
+      const isSelf = currentUser && streamerUsername === normUser(currentUser.username);
 
       videoEl.srcObject = stream;
       videoEl.muted = isSelf || isDeafened;
@@ -1373,7 +1565,8 @@
       }
       videoEl.play().catch(() => {});
 
-      if (stream && stream.getVideoTracks().length > 0) {
+      const hasLiveVideo = stream && stream.getVideoTracks().some(t => t.readyState === 'live');
+      if (hasLiveVideo) {
         waitingEl.classList.add('hidden');
       } else {
         waitingEl.classList.remove('hidden');
@@ -1419,18 +1612,31 @@
         return;
       }
 
+      const me = normUser(currentUser.username);
       isSharingScreen = true;
-      watchingStreamId = currentUser.username;
+      watchingStreamId = me;
       voiceViewMode = 'voice';
 
-      localScreenStream.getVideoTracks()[0].onended = () => stopScreenShare(true);
-
-      if (isCloudReady) {
-        await updateDoc(docPath('voiceStates', currentUser.username), { isStreaming: true });
+      const videoTrack = localScreenStream.getVideoTracks()[0];
+      const audioTrack = localScreenStream.getAudioTracks()[0] || null;
+      if (videoTrack) {
+        videoTrack.onended = () => stopScreenShare(true);
       }
 
-      await renegotiateAllPeers();
-      attachStreamToStage(localScreenStream, currentUser.username);
+      Object.values(peerConnections).forEach(entry => {
+        if (videoTrack) {
+          entry.screenVideoSender = entry.pc.addTrack(videoTrack, localScreenStream);
+        }
+        if (audioTrack) {
+          entry.screenAudioSender = entry.pc.addTrack(audioTrack, localScreenStream);
+        }
+      });
+
+      if (isCloudReady) {
+        await updateDoc(docPath('voiceStates', me), { isStreaming: true, lastPing: Date.now() });
+      }
+
+      attachStreamToStage(localScreenStream, me);
 
       playTone(620, 0.08, 'sine', 0);
       playTone(840, 0.12, 'sine', 0.08);
@@ -1440,18 +1646,29 @@
     }
 
     async function stopScreenShare(silent = false) {
+      Object.values(peerConnections).forEach(entry => {
+        if (entry.screenVideoSender) {
+          try { entry.pc.removeTrack(entry.screenVideoSender); } catch (e) {}
+          entry.screenVideoSender = null;
+        }
+        if (entry.screenAudioSender) {
+          try { entry.pc.removeTrack(entry.screenAudioSender); } catch (e) {}
+          entry.screenAudioSender = null;
+        }
+      });
+
       if (localScreenStream) {
         localScreenStream.getTracks().forEach(t => t.stop());
         localScreenStream = null;
       }
+
+      const me = currentUser ? normUser(currentUser.username) : '';
       isSharingScreen = false;
-      if (watchingStreamId === currentUser?.username) watchingStreamId = null;
+      if (watchingStreamId === me) watchingStreamId = null;
 
-      if (isCloudReady && currentUser && connectedVoiceChannelId) {
-        await updateDoc(docPath('voiceStates', currentUser.username), { isStreaming: false }).catch(() => {});
+      if (isCloudReady && me && connectedVoiceChannelId) {
+        await updateDoc(docPath('voiceStates', me), { isStreaming: false, lastPing: Date.now() }).catch(() => {});
       }
-
-      await renegotiateAllPeers();
 
       const videoEl = document.getElementById('stage-video');
       videoEl.srcObject = null;
@@ -1461,7 +1678,8 @@
     }
 
     window.stopWatchingOrSharing = () => {
-      if (isSharingScreen && watchingStreamId === currentUser?.username) {
+      const me = currentUser ? normUser(currentUser.username) : '';
+      if (isSharingScreen && watchingStreamId === me) {
         stopScreenShare();
       } else {
         watchingStreamId = null;
@@ -1471,7 +1689,7 @@
     };
 
     window.updateStreamVolume = (val) => {
-      if (currentUser && watchingStreamId === currentUser.username) return;
+      if (currentUser && watchingStreamId === normUser(currentUser.username)) return;
       const videoEl = document.getElementById('stage-video');
       videoEl.volume = val / 100;
       videoEl.muted = Number(val) === 0 || isDeafened;
@@ -1484,11 +1702,14 @@
 
     window.toggleMute = async () => {
       isMuted = !isMuted;
+      if (!isMuted && !localMicStream) {
+        await acquireMicrophone();
+      }
       if (localMicStream) {
-        localMicStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+        localMicStream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
       }
       if (isCloudReady && currentUser && connectedVoiceChannelId) {
-        await updateDoc(docPath('voiceStates', currentUser.username), { isMuted }).catch(() => {});
+        await updateDoc(docPath('voiceStates', normUser(currentUser.username)), { isMuted, lastPing: Date.now() }).catch(() => {});
       }
       renderMeBar();
       renderVoiceStage();
@@ -1499,14 +1720,14 @@
       isDeafened = !isDeafened;
       if (isDeafened) isMuted = true;
       if (localMicStream) {
-        localMicStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+        localMicStream.getAudioTracks().forEach(t => { t.enabled = !isMuted; });
       }
       document.querySelectorAll('#remote-audio-pool audio').forEach(el => { el.muted = isDeafened; });
       const stageVid = document.getElementById('stage-video');
-      if (stageVid) stageVid.muted = isDeafened || (currentUser && watchingStreamId === currentUser.username);
+      if (stageVid) stageVid.muted = isDeafened || (currentUser && watchingStreamId === normUser(currentUser.username));
 
       if (isCloudReady && currentUser && connectedVoiceChannelId) {
-        await updateDoc(docPath('voiceStates', currentUser.username), { isMuted, isDeafened }).catch(() => {});
+        await updateDoc(docPath('voiceStates', normUser(currentUser.username)), { isMuted, isDeafened, lastPing: Date.now() }).catch(() => {});
       }
       renderMeBar();
       renderVoiceStage();
@@ -1668,7 +1889,7 @@
         const prev = filtered[idx - 1];
         const grouped = prev && prev.authorId === msg.authorId && (msg.timestamp - prev.timestamp) < 300000 && !msg.replyTo;
         const timeStr = new Date(msg.timestamp || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const canDelete = currentUser && (msg.authorId === currentUser.username || currentUser.isAdmin);
+        const canDelete = currentUser && (normUser(msg.authorId) === normUser(currentUser.username) || currentUser.isAdmin);
         const reactions = msg.reactions || {};
 
         return `
@@ -1696,7 +1917,7 @@
                 <div class="flex flex-wrap gap-1.5 mt-1.5">
                   ${Object.entries(reactions).map(([emoji, users]) => {
                     if (!users || users.length === 0) return '';
-                    const mine = currentUser && users.includes(currentUser.username);
+                    const mine = currentUser && users.includes(normUser(currentUser.username));
                     return `
                       <button onclick="toggleReaction('${msg.id}', '${emoji}')" class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border cursor-pointer transition ${mine ? 'bg-[#5865f2]/20 border-[#5865f2] text-white' : 'bg-[#2b2d31] border-transparent hover:border-[#4e5058] text-[#b5bac1]'}">
                         <span>${emoji}</span>
@@ -1737,7 +1958,7 @@
             <h4 class="px-2 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">${title} — ${list.length}</h4>
             <div class="space-y-0.5">
               ${list.map(u => {
-                const vState = voiceStatesMap[u.username];
+                const vState = voiceStatesMap[normUser(u.username)];
                 return `
                   <div onclick="${vState?.isStreaming ? `watchMemberStream('${u.username}')` : ''}"
                     class="flex items-center justify-between gap-2 px-2 py-1.5 rounded hover:bg-[#35373c] ${u.status === 'offline' ? 'opacity-50' : ''} ${vState?.isStreaming ? 'cursor-pointer' : ''}">
@@ -1789,11 +2010,11 @@
       livePill.classList.toggle('hidden', !anyStreaming);
       livePill.classList.toggle('flex', anyStreaming);
 
-      // Player de transmissão: SÓ abre se watchingStreamId estiver ativo
       const playerBox = document.getElementById('live-player-box');
+      const me = currentUser ? normUser(currentUser.username) : '';
       if (watchingStreamId && voiceStatesMap[watchingStreamId]?.isStreaming) {
         const streamer = voiceStatesMap[watchingStreamId];
-        const isSelfStream = currentUser && watchingStreamId === currentUser.username;
+        const isSelfStream = watchingStreamId === me;
         playerBox.classList.remove('hidden');
         document.getElementById('stage-streamer-badge').textContent = isSelfStream ? 'Você está transmitindo sua tela' : `Tela de ${streamer.name}`;
         document.getElementById('stage-stop-watch-btn').textContent = isSelfStream ? 'Encerrar Live' : 'Parar de assistir';
@@ -1803,7 +2024,7 @@
         if (!videoEl.srcObject) {
           if (isSelfStream && localScreenStream) {
             attachStreamToStage(localScreenStream, watchingStreamId);
-          } else if (remoteStreams[watchingStreamId]?.screen?.getVideoTracks().length > 0) {
+          } else if (remoteStreams[watchingStreamId]?.screen?.getVideoTracks().some(t => t.readyState === 'live')) {
             attachStreamToStage(remoteStreams[watchingStreamId].screen, watchingStreamId);
           } else {
             document.getElementById('stage-waiting-overlay').classList.remove('hidden');
@@ -1820,13 +2041,13 @@
         : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 flex-1';
 
       grid.innerHTML = occupants.map(occ => {
-        const isMe = currentUser && occ.username === currentUser.username;
+        const isMe = normUser(occ.username) === me;
         return `
           <div class="relative bg-[#1e1f22] border-2 ${!occ.isMuted ? 'speaking-card' : 'border-[#2b2d31]'} rounded-xl flex flex-col items-center justify-center p-4 ${isCompact ? 'min-h-[104px]' : 'min-h-[180px]'} transition">
             ${occ.isStreaming ? `
               <button onclick="watchMemberStream('${occ.username}')" class="absolute top-2.5 right-2.5 flex items-center gap-1.5 bg-[#f23f43] hover:bg-[#da373c] text-white text-[10px] font-extrabold uppercase px-2 py-1 rounded shadow cursor-pointer">
                 <span class="w-1.5 h-1.5 rounded-full bg-white live-dot"></span>
-                <span>${watchingStreamId === occ.username ? 'AO VIVO' : '▶ Assistir'}</span>
+                <span>${watchingStreamId === normUser(occ.username) ? 'AO VIVO' : '▶ Assistir'}</span>
               </button>
             ` : ''}
             <div style="background:${occ.color || '#5865f2'}" class="${isCompact ? 'w-12 h-12 text-xl' : 'w-20 h-20 text-3xl'} rounded-full flex items-center justify-center text-white shadow-lg mb-2">
@@ -1899,7 +2120,7 @@
 
       const payload = {
         channelId: activeChannelId,
-        authorId: currentUser.username,
+        authorId: normUser(currentUser.username),
         authorName: currentUser.name,
         authorEmoji: currentUser.emoji,
         authorColor: currentUser.color,
@@ -1924,13 +2145,14 @@
 
     window.toggleReaction = async (msgId, emoji) => {
       if (!currentUser) return;
+      const me = normUser(currentUser.username);
       const msg = messagesList.find(m => m.id === msgId);
       if (!msg) return;
       const reactions = { ...(msg.reactions || {}) };
       const list = [...(reactions[emoji] || [])];
-      const idx = list.indexOf(currentUser.username);
+      const idx = list.indexOf(me);
       if (idx >= 0) list.splice(idx, 1);
-      else list.push(currentUser.username);
+      else list.push(me);
       reactions[emoji] = list;
 
       if (isCloudReady) {
@@ -2046,7 +2268,6 @@
           </div>
 
           ${isAdmin ? `
-            <!-- PAINEL DE SEGURANÇA DO ADMIN (BLOQUEAR CADASTROS E CÓDIGO DE CONVITE) -->
             <div class="bg-[#232428] border border-[#5865f2]/50 rounded-lg p-3.5 space-y-3">
               <div class="flex items-center justify-between">
                 <div>
@@ -2067,7 +2288,6 @@
             </div>
           ` : ''}
 
-          <!-- Status WebRTC Anti-Travamento -->
           <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3 space-y-1.5">
             <div class="flex items-center justify-between text-xs">
               <span class="text-[#b5bac1] font-semibold">Qualidade Voz/Vídeo (P2P Direto):</span>
@@ -2083,7 +2303,6 @@
             </div>
           </div>
 
-          <!-- Comparativo GitHub vs PC -->
           <div class="grid grid-cols-2 gap-2.5">
             <div class="bg-[#2b2d31] border border-[#3f4147] rounded-lg p-3">
               <p class="text-[11px] font-bold uppercase text-[#949ba4]">1. GitHub Pages</p>
@@ -2139,7 +2358,7 @@
       }
       const nextState = !(securityConfig.registrationsOpen !== false);
       securityConfig.registrationsOpen = nextState;
-      securityConfig.updatedBy = currentUser.username;
+      securityConfig.updatedBy = normUser(currentUser.username);
 
       if (isCloudReady) {
         await setDoc(docPath('settings', 'security'), securityConfig, { merge: true });
@@ -2161,7 +2380,7 @@
         return;
       }
       securityConfig.inviteCode = newCode;
-      securityConfig.updatedBy = currentUser.username;
+      securityConfig.updatedBy = normUser(currentUser.username);
       if (isCloudReady) {
         await setDoc(docPath('settings', 'security'), securityConfig, { merge: true });
       }
@@ -2286,7 +2505,7 @@
       currentUser.emoji = emoji;
 
       if (isCloudReady) {
-        await updateDoc(docPath('users', currentUser.username), { name, status, emoji });
+        await updateDoc(docPath('users', normUser(currentUser.username)), { name, status, emoji });
       }
       renderMeBar();
       renderMembers();
