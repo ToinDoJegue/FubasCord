@@ -68,8 +68,8 @@
 
       <!-- Abas Login / Cadastro -->
       <div class="grid grid-cols-2 bg-[#2b2d31] p-1 mx-6 mt-4 rounded-lg">
-        <button id="tab-login" onclick="switchAuthTab('login')" class="py-1.5 text-sm font-semibold rounded-md bg-[#5865f2] text-white transition">Entrar</button>
-        <button id="tab-register" onclick="switchAuthTab('register')" class="py-1.5 text-sm font-semibold rounded-md text-[#b5bac1] hover:text-white transition">Criar Conta</button>
+        <button id="tab-login" type="button" onclick="switchAuthTab('login')" class="py-1.5 text-sm font-semibold rounded-md bg-[#5865f2] text-white transition cursor-pointer">Entrar</button>
+        <button id="tab-register" type="button" onclick="switchAuthTab('register')" class="py-1.5 text-sm font-semibold rounded-md text-[#b5bac1] hover:text-white transition cursor-pointer">Criar Conta</button>
       </div>
 
       <!-- Formulário de Login -->
@@ -86,7 +86,7 @@
         <button type="submit" id="btn-login-submit" class="w-full bg-[#5865f2] hover:bg-[#4752c4] text-white font-semibold py-2.5 rounded text-sm transition cursor-pointer">
           Entrar no FubasCord
         </button>
-        <p class="text-[11px] text-center text-[#949ba4]">Ainda não tem conta? Clique em <button type="button" onclick="switchAuthTab('register')" class="text-[#00a8fc] hover:underline font-medium">Criar Conta</button> acima.</p>
+        <p class="text-[11px] text-center text-[#949ba4]">Ainda não tem conta? Clique em <button type="button" onclick="switchAuthTab('register')" class="text-[#00a8fc] hover:underline font-medium cursor-pointer">Criar Conta</button> acima.</p>
       </form>
 
       <!-- Formulário de Cadastro -->
@@ -140,7 +140,7 @@
     <aside id="servers-drawer" class="fixed md:static inset-y-0 left-0 z-40 w-[72px] bg-[#1e1f22] flex flex-col items-center py-3 gap-2 shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-200">
       <div class="server-wrap relative flex items-center justify-center w-full group">
         <span class="server-pill absolute left-0 w-1 h-0 opacity-0 bg-white rounded-r-full"></span>
-        <button onclick="openInviteModal()" title="Convidar Amigos" class="server-icon w-12 h-12 rounded-[24px] bg-[#313338] hover:bg-[#5865f2] text-[#dbdee1] hover:text-white flex items-center justify-center shadow-md cursor-pointer">
+        <button type="button" onclick="openInviteModal()" title="Convidar Amigos" class="server-icon w-12 h-12 rounded-[24px] bg-[#313338] hover:bg-[#5865f2] text-[#dbdee1] hover:text-white flex items-center justify-center shadow-md cursor-pointer">
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09-.01-.02-.04-.03-.07-.03-1.5.26-2.93.71-4.27 1.33-.01 0-.02.01-.03.02-2.72 4.07-3.47 8.03-3.1 11.95 0 .02.01.04.03.05 1.8 1.32 3.53 2.12 5.24 2.65.03.01.06 0 .07-.02.4-.55.76-1.13 1.07-1.74.02-.04 0-.08-.04-.09-.57-.22-1.11-.48-1.64-.78-.04-.02-.04-.08-.01-.11.11-.08.22-.17.33-.25.02-.02.05-.02.07-.01 3.44 1.57 7.15 1.57 10.55 0 .02-.01.05-.01.07.01.11.09.22.17.33.26.04.03.04.09-.01.11-.52.31-1.07.56-1.64.78-.04.01-.05.06-.04.09.32.61.68 1.19 1.07 1.74.03.01.06.02.09.01 1.72-.53 3.45-1.33 5.25-2.65.02-.01.03-.03.03-.05.44-4.53-.73-8.46-3.1-11.95-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12 0 1.17-.83 2.12-1.89 2.12z"/>
           </svg>
@@ -150,7 +150,7 @@
       <div id="server-list" class="flex flex-col items-center gap-2 w-full overflow-y-auto no-scrollbar flex-1"></div>
       <div class="server-wrap relative flex items-center justify-center w-full mt-1">
         <span class="server-pill absolute left-0 w-1 h-0 opacity-0 bg-white rounded-r-full"></span>
-        <button onclick="openCreateServerModal()" title="Criar Novo Servidor" class="server-icon w-12 h-12 rounded-[24px] bg-[#313338] hover:bg-[#23a55a] text-[#23a55a] hover:text-white flex items-center justify-center text-2xl font-light cursor-pointer">+</button>
+        <button type="button" onclick="openCreateServerModal()" title="Criar Novo Servidor" class="server-icon w-12 h-12 rounded-[24px] bg-[#313338] hover:bg-[#23a55a] text-[#23a55a] hover:text-white flex items-center justify-center text-2xl font-light cursor-pointer">+</button>
       </div>
     </aside>
 
@@ -174,10 +174,10 @@
             <p id="voice-channel-label" class="text-[11px] text-[#949ba4] group-hover:text-white group-hover:underline truncate">Sala Principal / Q.G.</p>
           </div>
           <div class="flex items-center gap-1">
-            <button id="panel-screen-btn" onclick="toggleScreenShare()" title="Transmitir Tela na Sala" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer">
+            <button id="panel-screen-btn" type="button" onclick="toggleScreenShare()" title="Transmitir Tela na Sala" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             </button>
-            <button onclick="disconnectVoice()" title="Desconectar" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-[#f23f43] cursor-pointer">
+            <button type="button" onclick="disconnectVoice()" title="Desconectar" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-[#f23f43] cursor-pointer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"/></svg>
             </button>
           </div>
@@ -197,13 +197,13 @@
           </div>
         </div>
         <div class="flex items-center gap-0.5 shrink-0">
-          <button id="btn-mute" onclick="toggleMute()" title="Silenciar Microfone" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer relative">
+          <button id="btn-mute" type="button" onclick="toggleMute()" title="Silenciar Microfone" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer relative">
             <svg id="icon-mic" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15a.998.998 0 0 0-.98-.85c-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08a6.993 6.993 0 0 0 5.91-5.78c.1-.6-.39-1.14-1-1.14z"/></svg>
           </button>
-          <button id="btn-deafen" onclick="toggleDeafen()" title="Desativar Áudio" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer">
+          <button id="btn-deafen" type="button" onclick="toggleDeafen()" title="Desativar Áudio" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer">
             <svg id="icon-headset" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1a7 7 0 0 1 14 0v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z"/></svg>
           </button>
-          <button onclick="openProfileModal()" title="Configurações da Conta" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer">
+          <button type="button" onclick="openProfileModal()" title="Configurações da Conta" class="p-1.5 rounded hover:bg-[#35373c] text-[#b5bac1] hover:text-white cursor-pointer">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
           </button>
         </div>
@@ -217,7 +217,7 @@
       <div id="text-channel-view" class="flex-1 flex flex-col min-h-0">
         <header class="h-12 px-4 border-b border-[#1f2023] flex items-center justify-between gap-2 shrink-0 bg-[#313338]">
           <div class="flex items-center gap-2 min-w-0">
-            <button onclick="openMobileLeft()" class="md:hidden p-1.5 -ml-1.5 rounded text-[#b5bac1] hover:text-white hover:bg-[#35373c]">
+            <button type="button" onclick="openMobileLeft()" class="md:hidden p-1.5 -ml-1.5 rounded text-[#b5bac1] hover:text-white hover:bg-[#35373c]">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
             <span class="text-[#80848e] text-xl font-medium">#</span>
@@ -226,27 +226,27 @@
             <p id="active-channel-topic" class="hidden sm:block text-xs text-[#949ba4] truncate">Bate-papo principal da galera</p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <button onclick="openDiagnosticsModal()" title="Checklist de Verificação (Microfone, Áudio, Firewall e Rede)" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#5865f2]/20 hover:bg-[#5865f2]/35 text-[#949cf7] border border-[#5865f2]/40 cursor-pointer transition">
+            <button type="button" onclick="openDiagnosticsModal()" title="Checklist de Verificação (Microfone, Áudio, Firewall e Rede)" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#5865f2]/20 hover:bg-[#5865f2]/35 text-[#949cf7] border border-[#5865f2]/40 cursor-pointer transition">
               <span>🩺</span>
               <span class="hidden md:inline">Checklist</span>
             </button>
-            <button onclick="openNetworkModal()" title="Status de Rede, Segurança e Backup (GitHub / PC)" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#232428] hover:bg-[#1e1f22] text-[#dbdee1] border border-[#3f4147] cursor-pointer transition">
+            <button type="button" onclick="openNetworkModal()" title="Status de Rede, Admin, Contas e Backup" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#232428] hover:bg-[#1e1f22] text-[#dbdee1] border border-[#3f4147] cursor-pointer transition">
               <span id="net-pill-dot" class="w-2 h-2 rounded-full bg-[#23a55a]"></span>
               <span id="net-pill-label" class="hidden sm:inline">Rede OK</span>
               <span id="net-pill-ping" class="text-[11px] text-[#949ba4]">--ms</span>
             </button>
-            <button id="header-live-jump-btn" onclick="jumpToActiveLive()" class="hidden items-center gap-1.5 px-2.5 py-1 rounded text-xs font-bold bg-[#f23f43] hover:bg-[#da373c] text-white cursor-pointer transition">
+            <button id="header-live-jump-btn" type="button" onclick="jumpToActiveLive()" class="hidden items-center gap-1.5 px-2.5 py-1 rounded text-xs font-bold bg-[#f23f43] hover:bg-[#da373c] text-white cursor-pointer transition">
               <span class="w-2 h-2 rounded-full bg-white live-dot"></span>
               <span id="header-live-jump-label">AO VIVO na Sala</span>
             </button>
-            <button onclick="toggleScreenShare()" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#2b2d31] hover:bg-[#35373c] text-[#dbdee1] cursor-pointer transition">
+            <button type="button" onclick="toggleScreenShare()" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#2b2d31] hover:bg-[#35373c] text-[#dbdee1] cursor-pointer transition">
               <svg class="w-4 h-4 text-[#23a55a]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
               <span class="hidden sm:inline">Transmitir</span>
             </button>
             <div class="relative hidden sm:block">
               <input id="search-input" oninput="renderMessages()" type="text" placeholder="Buscar" class="w-32 focus:w-44 transition-all bg-[#1e1f22] text-xs text-[#dbdee1] placeholder-[#80848e] rounded px-2.5 py-1.5 outline-none" />
             </div>
-            <button onclick="toggleMembersDrawer()" title="Mostrar/Ocultar Membros" class="p-1.5 rounded text-[#b5bac1] hover:text-white hover:bg-[#35373c] cursor-pointer">
+            <button type="button" onclick="toggleMembersDrawer()" title="Mostrar/Ocultar Membros" class="p-1.5 rounded text-[#b5bac1] hover:text-white hover:bg-[#35373c] cursor-pointer">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
             </button>
           </div>
@@ -256,7 +256,7 @@
 
         <div id="reply-banner" class="hidden mx-4 px-3 py-1.5 bg-[#2b2d31] rounded-t-lg border-b border-[#1e1f22] flex items-center justify-between text-xs text-[#b5bac1]">
           <span>Respondendo a <strong id="reply-target-name" class="text-white"></strong></span>
-          <button onclick="cancelReply()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+          <button type="button" onclick="cancelReply()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
         </div>
 
         <div id="image-preview-bar" class="hidden mx-4 p-2.5 bg-[#2b2d31] rounded-t-lg border-b border-[#1e1f22] flex items-center gap-3">
@@ -265,7 +265,7 @@
             <p id="image-preview-name" class="text-xs text-white font-medium truncate">imagem.png</p>
             <p class="text-[11px] text-[#949ba4]">Pronta para enviar no chat</p>
           </div>
-          <button onclick="clearPendingImage()" class="p-1.5 text-[#f23f43] hover:bg-[#35373c] rounded cursor-pointer">🗑️</button>
+          <button type="button" onclick="clearPendingImage()" class="p-1.5 text-[#f23f43] hover:bg-[#35373c] rounded cursor-pointer">🗑️</button>
         </div>
 
         <div class="px-4 pb-5 pt-1 shrink-0 relative">
@@ -289,7 +289,7 @@
       <div id="voice-stage-view" class="hidden flex-1 flex flex-col bg-[#111214] min-h-0">
         <header class="h-12 px-4 flex items-center justify-between border-b border-[#1e1f22] bg-[#18191c] shrink-0">
           <div class="flex items-center gap-2.5 min-w-0">
-            <button onclick="openMobileLeft()" class="md:hidden p-1.5 -ml-1.5 rounded text-[#b5bac1] hover:text-white hover:bg-[#2b2d31]">
+            <button type="button" onclick="openMobileLeft()" class="md:hidden p-1.5 -ml-1.5 rounded text-[#b5bac1] hover:text-white hover:bg-[#2b2d31]">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
             <svg class="w-5 h-5 text-[#23a55a] shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
@@ -299,14 +299,14 @@
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="openDiagnosticsModal()" title="Checklist de Diagnóstico de Áudio e Conexão" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#5865f2]/20 hover:bg-[#5865f2]/35 text-[#949cf7] border border-[#5865f2]/40 cursor-pointer transition">
+            <button type="button" onclick="openDiagnosticsModal()" title="Checklist de Diagnóstico de Áudio e Conexão" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#5865f2]/20 hover:bg-[#5865f2]/35 text-[#949cf7] border border-[#5865f2]/40 cursor-pointer transition">
               <span>🩺 Checklist</span>
             </button>
-            <button onclick="openNetworkModal()" title="Monitor de Rede e Anti-Travamento" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#232428] hover:bg-[#2b2d31] text-[#dbdee1] border border-[#35373c] cursor-pointer transition">
+            <button type="button" onclick="openNetworkModal()" title="Monitor de Rede e Admin" class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-[#232428] hover:bg-[#2b2d31] text-[#dbdee1] border border-[#35373c] cursor-pointer transition">
               <span id="stage-net-dot" class="w-2 h-2 rounded-full bg-[#23a55a]"></span>
               <span id="stage-net-ping" class="text-[11px]">--ms</span>
             </button>
-            <button onclick="returnToTextChat()" class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#2b2d31] hover:bg-[#35373c] text-xs font-semibold text-white cursor-pointer transition">
+            <button type="button" onclick="returnToTextChat()" class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#2b2d31] hover:bg-[#35373c] text-xs font-semibold text-white cursor-pointer transition">
               <span># Abrir Chat</span>
             </button>
           </div>
@@ -320,7 +320,7 @@
               <div class="w-10 h-10 border-4 border-[#5865f2] border-t-transparent rounded-full animate-spin mb-3"></div>
               <p id="stage-waiting-text" class="text-sm font-semibold text-white">Conectando à transmissão de tela...</p>
               <p class="text-xs text-[#949ba4] mt-1">Sincronizando vídeo direto com o transmissor</p>
-              <button onclick="retryWatchStream()" class="mt-3 px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">🔄 Reconectar Vídeo</button>
+              <button type="button" onclick="retryWatchStream()" class="mt-3 px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">🔄 Reconectar Vídeo</button>
             </div>
             <div class="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
               <span class="flex items-center gap-1.5 bg-[#f23f43] text-white text-[11px] font-extrabold uppercase px-2.5 py-1 rounded shadow">
@@ -337,8 +337,8 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <button onclick="fullscreenStageVideo()" class="px-2.5 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-semibold cursor-pointer">⛶ Tela Cheia</button>
-                <button id="stage-stop-watch-btn" onclick="stopWatchingOrSharing()" class="px-2.5 py-1 rounded bg-[#f23f43] hover:bg-[#da373c] text-white text-xs font-semibold cursor-pointer">Parar de assistir</button>
+                <button type="button" onclick="fullscreenStageVideo()" class="px-2.5 py-1 rounded bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-semibold cursor-pointer">⛶ Tela Cheia</button>
+                <button id="stage-stop-watch-btn" type="button" onclick="stopWatchingOrSharing()" class="px-2.5 py-1 rounded bg-[#f23f43] hover:bg-[#da373c] text-white text-xs font-semibold cursor-pointer">Parar de assistir</button>
               </div>
             </div>
           </div>
@@ -349,17 +349,17 @@
 
         <!-- Barra Inferior de Controles da Call -->
         <div class="h-16 bg-[#18191c] border-t border-[#1e1f22] px-4 flex items-center justify-center gap-3 shrink-0">
-          <button id="stage-btn-screen" onclick="toggleScreenShare()" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-semibold cursor-pointer transition">
+          <button id="stage-btn-screen" type="button" onclick="toggleScreenShare()" class="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white text-xs font-semibold cursor-pointer transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             <span id="stage-btn-screen-text">Compartilhar Tela</span>
           </button>
-          <button id="stage-btn-mute" onclick="toggleMute()" class="w-11 h-11 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center cursor-pointer transition">
+          <button id="stage-btn-mute" type="button" onclick="toggleMute()" class="w-11 h-11 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center cursor-pointer transition">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15a.998.998 0 0 0-.98-.85c-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08a6.993 6.993 0 0 0 5.91-5.78c.1-.6-.39-1.14-1-1.14z"/></svg>
           </button>
-          <button id="stage-btn-deafen" onclick="toggleDeafen()" class="w-11 h-11 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center cursor-pointer transition">
+          <button id="stage-btn-deafen" type="button" onclick="toggleDeafen()" class="w-11 h-11 rounded-full bg-[#2b2d31] hover:bg-[#35373c] text-white flex items-center justify-center cursor-pointer transition">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1a7 7 0 0 1 14 0v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z"/></svg>
           </button>
-          <button onclick="disconnectVoice()" class="w-12 h-11 rounded-full bg-[#f23f43] hover:bg-[#da373c] text-white flex items-center justify-center cursor-pointer transition shadow-lg">
+          <button type="button" onclick="disconnectVoice()" class="w-12 h-11 rounded-full bg-[#f23f43] hover:bg-[#da373c] text-white flex items-center justify-center cursor-pointer transition shadow-lg">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"/></svg>
           </button>
         </div>
@@ -406,7 +406,6 @@
 
     let db = null;
     let auth = null;
-    let fbUser = null;
     let isCloudReady = false;
 
     const AVATAR_EMOJIS = ['😎', '🦊', '🐱', '🐼', '🐸', '🦁', '🐙', '👾', '🚀', '🎮', '🎧', '🔥'];
@@ -694,12 +693,82 @@
     }
 
     // =========================================================================
+    // AÇÕES EXCLUSIVAS DO ADMIN (EXPULSAR DA CALL & EXCLUIR PERFIL)
+    // =========================================================================
+    window.adminKickFromVoice = async (rawTargetUsername, e) => {
+      if (e) e.stopPropagation();
+      if (!isCurrentUserAdmin()) {
+        showToast('Apenas o Admin pode desconectar participantes.');
+        return;
+      }
+      const target = normUser(rawTargetUsername);
+      if (!target || target === normUser(currentUser.username)) return;
+
+      const targetName = voiceStatesMap[target]?.name || usersMap[target]?.name || target;
+      delete rawVoiceStates[target];
+      rebuildActiveVoiceStates();
+      destroyPeerEntry(target);
+
+      if (isCloudReady) {
+        await deleteDoc(docPath('voiceStates', target)).catch(() => {});
+      }
+
+      renderChannels();
+      renderMembers();
+      renderVoiceStage();
+      updateLiveJumpBanner();
+      if (!document.getElementById('modal-overlay').classList.contains('hidden')) {
+        openNetworkModal();
+      }
+      showToast(`👢 ${targetName} foi desconectado da sala de voz.`);
+    };
+
+    window.adminDeleteUserProfile = async (rawTargetUsername, e) => {
+      if (e) e.stopPropagation();
+      if (!isCurrentUserAdmin()) {
+        showToast('Apenas o Admin pode excluir perfis.');
+        return;
+      }
+      const target = normUser(rawTargetUsername);
+      if (!target || target === normUser(currentUser.username)) return;
+
+      const targetUser = usersMap[target];
+      if (!targetUser) return;
+      if (targetUser.isAdmin) {
+        showToast('Não é possível excluir uma conta de Administrador.');
+        return;
+      }
+
+      const confirmed = window.confirm(`Tem certeza que deseja excluir permanentemente o perfil de "${targetUser.name}" (@${target})?`);
+      if (!confirmed) return;
+
+      delete usersMap[target];
+      delete rawVoiceStates[target];
+      rebuildActiveVoiceStates();
+      destroyPeerEntry(target);
+
+      if (isCloudReady) {
+        await deleteDoc(docPath('voiceStates', target)).catch(() => {});
+        await deleteDoc(docPath('users', target)).catch(() => {});
+      }
+
+      renderChannels();
+      renderMembers();
+      renderVoiceStage();
+      updateLiveJumpBanner();
+      if (!document.getElementById('modal-overlay').classList.contains('hidden')) {
+        openNetworkModal();
+      }
+      showToast(`🗑️ Perfil de ${targetUser.name} (@${target}) excluído com sucesso!`);
+    };
+
+    // =========================================================================
     // CHECKLIST INTERATIVO DE DIAGNÓSTICO (MICROFONE, ÁUDIO, FIREWALL E REDE)
     // =========================================================================
     let diagMicStream = null;
     let diagAnimFrame = null;
 
-    function stopDiagnosticsMic() {
+    window.stopDiagnosticsMic = () => {
       if (diagAnimFrame) {
         cancelAnimationFrame(diagAnimFrame);
         diagAnimFrame = null;
@@ -708,7 +777,7 @@
         diagMicStream.getTracks().forEach(t => t.stop());
         diagMicStream = null;
       }
-    }
+    };
 
     window.playDiagTestBeep = () => {
       try {
@@ -737,7 +806,7 @@
     };
 
     window.runFullDiagnostics = async () => {
-      stopDiagnosticsMic();
+      window.stopDiagnosticsMic();
 
       const setCheck = (id, state, text) => {
         const badge = document.getElementById(`diag-badge-${id}`);
@@ -760,13 +829,11 @@
         if (desc && text) desc.textContent = text;
       };
 
-      // 1. Verificar HTTPS / Contexto Seguro
       const isSecure = window.isSecureContext;
       setCheck('https', isSecure ? 'ok' : 'err', isSecure
         ? `Conexão segura ativa (${window.location.protocol}//)`
         : 'Site sem HTTPS! O navegador bloqueia microfone e tela em HTTP.');
 
-      // 2. Verificar Latência do Servidor Firebase
       setCheck('firebase', 'loading', 'Medindo resposta do servidor em tempo real...');
       if (isCloudReady && db) {
         const t0 = performance.now();
@@ -781,7 +848,6 @@
         setCheck('firebase', 'err', 'Não conectado ao Firebase.');
       }
 
-      // 3. Verificar Permissão e Nível de Voz do Microfone
       setCheck('mic', 'loading', 'Solicitando acesso ao microfone...');
       try {
         diagMicStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
@@ -810,7 +876,6 @@
         setCheck('mic', 'err', 'Bloqueado! Clique no cadeado ao lado do link na barra de endereço e mude Microfone para Permitir.');
       }
 
-      // 4. Testar Rota WebRTC (Direta P2P vs Relay / Bloqueio de Wi-Fi)
       setCheck('webrtc', 'loading', 'Testando portas UDP / STUN / TURN no seu roteador...');
       try {
         const testPc = new RTCPeerConnection(RTC_CONFIG);
@@ -854,11 +919,10 @@
               <h3 class="text-lg font-bold text-white">🩺 Checklist de Verificação Inicial</h3>
               <p class="text-xs text-[#949ba4]">Confirme se microfone, som e roteador estão liberados antes da call</p>
             </div>
-            <button onclick="stopDiagnosticsMic(); closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+            <button type="button" onclick="closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
           </div>
 
           <div class="space-y-2.5">
-            <!-- Item 1: HTTPS -->
             <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-white">1. Conexão Segura (HTTPS)</span>
@@ -867,7 +931,6 @@
               <p id="diag-desc-https" class="text-[11px] text-[#949ba4] mt-1">Necessário para liberar áudio e vídeo no navegador.</p>
             </div>
 
-            <!-- Item 2: Firebase -->
             <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-white">2. Servidor em Tempo Real (Firebase)</span>
@@ -876,7 +939,6 @@
               <p id="diag-desc-firebase" class="text-[11px] text-[#949ba4] mt-1">Sincronização das salas, chat e sinalização da chamada.</p>
             </div>
 
-            <!-- Item 3: Microfone -->
             <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3 space-y-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-white">3. Microfone & Captação de Voz</span>
@@ -888,7 +950,6 @@
               </div>
             </div>
 
-            <!-- Item 4: Saída de Áudio -->
             <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3 flex items-center justify-between gap-2">
               <div>
                 <span class="text-xs font-bold text-white block">4. Saída de Áudio (Fone / Caixa)</span>
@@ -897,7 +958,6 @@
               <button type="button" onclick="playDiagTestBeep()" class="px-3 py-1.5 rounded bg-[#383a40] hover:bg-[#5865f2] text-white text-xs font-semibold cursor-pointer shrink-0 transition">🔊 Ouvir Bip</button>
             </div>
 
-            <!-- Item 5: Rota de Rede / Roteador -->
             <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-white">5. Roteador / Firewall (Sem Delay)</span>
@@ -909,7 +969,7 @@
 
           <div class="flex items-center justify-between pt-2 border-t border-[#26272d]">
             <button type="button" onclick="runFullDiagnostics()" class="px-3.5 py-2 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">🔄 Rodar Teste Novamente</button>
-            <button type="button" onclick="stopDiagnosticsMic(); closeModal()" class="px-4 py-2 rounded bg-[#23a55a] hover:bg-[#1a8245] text-white text-xs font-semibold cursor-pointer">Tudo Pronto</button>
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded bg-[#23a55a] hover:bg-[#1a8245] text-white text-xs font-semibold cursor-pointer">Tudo Pronto</button>
           </div>
         </div>
       `);
@@ -1010,7 +1070,6 @@
 
         onAuthStateChanged(auth, async (user) => {
           if (!user) return;
-          fbUser = user;
           isCloudReady = true;
           syncDot.className = 'w-2 h-2 rounded-full bg-[#23a55a]';
           syncText.textContent = 'Conectado ao servidor em tempo real';
@@ -1107,6 +1166,11 @@
         rebuildActiveVoiceStates();
         if (currentUser) {
           const meKey = normUser(currentUser.username);
+          if (!usersMap[meKey] && Object.keys(usersMap).length > 0) {
+            showToast('Sua conta foi removida pelo administrador.');
+            window.logoutUser();
+            return;
+          }
           if (usersMap[meKey]) {
             currentUser = usersMap[meKey];
             renderMeBar();
@@ -1143,6 +1207,19 @@
           rawVoiceStates[key] = { ...v, username: key };
         });
         rebuildActiveVoiceStates();
+
+        if (connectedVoiceChannelId && currentUser) {
+          const me = normUser(currentUser.username);
+          if (!rawVoiceStates[me]) {
+            if (isSharingScreen) stopScreenShare(true);
+            closeAllWebRTC();
+            connectedVoiceChannelId = null;
+            watchingStreamId = null;
+            voiceViewMode = 'text';
+            document.getElementById('voice-connected-panel').classList.add('hidden');
+            showToast('⚠️ Você foi desconectado da sala de voz pelo Admin.');
+          }
+        }
 
         if (watchingStreamId && (!voiceStatesMap[watchingStreamId] || !voiceStatesMap[watchingStreamId].isStreaming)) {
           showToast('A transmissão de tela foi encerrada.');
@@ -1214,8 +1291,8 @@
       const isLogin = tab === 'login';
       document.getElementById('form-login').classList.toggle('hidden', !isLogin);
       document.getElementById('form-register').classList.toggle('hidden', isLogin);
-      document.getElementById('tab-login').className = `py-1.5 text-sm font-semibold rounded-md transition ${isLogin ? 'bg-[#5865f2] text-white' : 'text-[#b5bac1] hover:text-white'}`;
-      document.getElementById('tab-register').className = `py-1.5 text-sm font-semibold rounded-md transition ${!isLogin ? 'bg-[#5865f2] text-white' : 'text-[#b5bac1] hover:text-white'}`;
+      document.getElementById('tab-login').className = `py-1.5 text-sm font-semibold rounded-md transition cursor-pointer ${isLogin ? 'bg-[#5865f2] text-white' : 'text-[#b5bac1] hover:text-white'}`;
+      document.getElementById('tab-register').className = `py-1.5 text-sm font-semibold rounded-md transition cursor-pointer ${!isLogin ? 'bg-[#5865f2] text-white' : 'text-[#b5bac1] hover:text-white'}`;
       if (!isLogin) applyRegistrationLockUI();
     };
 
@@ -1338,7 +1415,7 @@
 
       if (openChecklist) {
         localStorage.setItem('fubascord_diag_done', '1');
-        setTimeout(() => openDiagnosticsModal(), 300);
+        setTimeout(() => window.openDiagnosticsModal(), 300);
       }
     }
 
@@ -1362,7 +1439,7 @@
     }
 
     window.logoutUser = async () => {
-      if (connectedVoiceChannelId) await disconnectVoice();
+      if (connectedVoiceChannelId) await window.disconnectVoice();
       if (currentUser && isCloudReady) {
         const me = normUser(currentUser.username);
         await updateDoc(docPath('users', me), { status: 'offline' }).catch(() => {});
@@ -1370,7 +1447,7 @@
       }
       localStorage.removeItem('fubascord_session');
       currentUser = null;
-      closeModal();
+      window.closeModal();
       document.getElementById('app').classList.add('hidden');
       document.getElementById('auth-screen').classList.remove('hidden');
       applyRegistrationLockUI();
@@ -1707,7 +1784,7 @@
       }
 
       syncWebRTCPeers();
-      closeMobileDrawers();
+      window.closeMobileDrawers();
       renderChannels();
       renderVoiceStage();
     };
@@ -1754,7 +1831,7 @@
       const state = voiceStatesMap[streamerUsername];
       if (!state || !state.isStreaming) return;
       if (connectedVoiceChannelId !== state.channelId) {
-        await joinVoiceChannel(state.channelId);
+        await window.joinVoiceChannel(state.channelId);
       }
       watchingStreamId = streamerUsername;
       voiceViewMode = 'voice';
@@ -1767,7 +1844,7 @@
       } else if (remoteStreams[streamerUsername] && remoteStreams[streamerUsername].screen.getVideoTracks().some(t => t.readyState === 'live')) {
         attachStreamToStage(remoteStreams[streamerUsername].screen, streamerUsername);
       } else {
-        await retryWatchStream();
+        await window.retryWatchStream();
       }
     };
 
@@ -1789,7 +1866,7 @@
 
     window.jumpToActiveLive = () => {
       const liveUser = Object.values(voiceStatesMap).find(v => v.serverId === activeServerId && v.isStreaming);
-      if (liveUser) watchMemberStream(liveUser.username);
+      if (liveUser) window.watchMemberStream(liveUser.username);
     };
 
     function attachStreamToStage(stream, rawStreamerUsername) {
@@ -1834,7 +1911,7 @@
           showToast('Crie um canal de voz primeiro.');
           return;
         }
-        await joinVoiceChannel(firstVoice.id);
+        await window.joinVoiceChannel(firstVoice.id);
       }
 
       try {
@@ -2017,7 +2094,7 @@
         return `
           <div class="server-wrap relative flex items-center justify-center w-full ${active ? 'active' : ''}">
             <span class="server-pill absolute left-0 w-1 h-0 opacity-0 bg-white rounded-r-full"></span>
-            <button onclick="selectServer('${srv.id}')" title="${escapeHtml(srv.name)}"
+            <button type="button" onclick="selectServer('${srv.id}')" title="${escapeHtml(srv.name)}"
               class="server-icon w-12 h-12 rounded-[24px] ${active ? 'bg-[#5865f2] text-white' : 'bg-[#313338] hover:bg-[#5865f2] text-[#dbdee1] hover:text-white'} flex items-center justify-center text-xl shadow-md cursor-pointer">
               ${escapeHtml(srv.icon || '💬')}
             </button>
@@ -2043,18 +2120,21 @@
         document.getElementById('message-input').placeholder = `Conversar em #${activeText.name}`;
       }
 
+      const isAdmin = isCurrentUserAdmin();
+      const me = currentUser ? normUser(currentUser.username) : '';
+
       const listEl = document.getElementById('channel-list');
       listEl.innerHTML = `
         <div>
           <div class="flex items-center justify-between px-1.5 mb-1 text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
             <span>Canais de Texto</span>
-            <button onclick="openCreateChannelModal('text')" title="Criar Canal de Texto" class="text-base leading-none hover:text-white cursor-pointer">+</button>
+            <button type="button" onclick="openCreateChannelModal('text')" title="Criar Canal de Texto" class="text-base leading-none hover:text-white cursor-pointer">+</button>
           </div>
           <div class="space-y-0.5">
             ${textChannels.map(ch => {
               const isSelected = voiceViewMode === 'text' && ch.id === activeChannelId;
               return `
-                <button onclick="selectTextChannel('${ch.id}')" class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-sm font-medium cursor-pointer transition ${isSelected ? 'bg-[#404249] text-white' : 'text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]'}">
+                <button type="button" onclick="selectTextChannel('${ch.id}')" class="w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-sm font-medium cursor-pointer transition ${isSelected ? 'bg-[#404249] text-white' : 'text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]'}">
                   <span class="text-[#80848e] text-base leading-none">#</span>
                   <span class="truncate">${escapeHtml(ch.name)}</span>
                 </button>
@@ -2066,7 +2146,7 @@
         <div>
           <div class="flex items-center justify-between px-1.5 mb-1 text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">
             <span>Canais de Voz</span>
-            <button onclick="openCreateChannelModal('voice')" title="Criar Canal de Voz" class="text-base leading-none hover:text-white cursor-pointer">+</button>
+            <button type="button" onclick="openCreateChannelModal('voice')" title="Criar Canal de Voz" class="text-base leading-none hover:text-white cursor-pointer">+</button>
           </div>
           <div class="space-y-1">
             ${voiceChannels.map(vc => {
@@ -2075,7 +2155,7 @@
               const occupants = Object.values(voiceStatesMap).filter(v => v.channelId === vc.id);
               return `
                 <div>
-                  <button onclick="joinVoiceChannel('${vc.id}')" class="w-full flex items-center justify-between px-2 py-1.5 rounded text-sm font-medium cursor-pointer transition ${isViewingHere ? 'bg-[#404249] text-white' : (isConnectedHere ? 'text-[#23a55a] hover:bg-[#35373c]' : 'text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]')}">
+                  <button type="button" onclick="joinVoiceChannel('${vc.id}')" class="w-full flex items-center justify-between px-2 py-1.5 rounded text-sm font-medium cursor-pointer transition ${isViewingHere ? 'bg-[#404249] text-white' : (isConnectedHere ? 'text-[#23a55a] hover:bg-[#35373c]' : 'text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]')}">
                     <span class="flex items-center gap-1.5 truncate">
                       <svg class="w-4 h-4 shrink-0 ${isConnectedHere ? 'text-[#23a55a]' : 'text-[#80848e]'}" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
                       <span class="truncate">${escapeHtml(vc.name)}</span>
@@ -2084,19 +2164,23 @@
                   </button>
                   ${occupants.length > 0 ? `
                     <div class="pl-5 pr-1 py-1 space-y-1">
-                      ${occupants.map(occ => `
-                        <div onclick="${occ.isStreaming ? `watchMemberStream('${occ.username}')` : `joinVoiceChannel('${vc.id}')`}"
-                          class="flex items-center justify-between gap-1.5 px-1.5 py-1 rounded hover:bg-[#35373c] cursor-pointer group">
-                          <div class="flex items-center gap-2 min-w-0">
-                            <div style="background:${occ.color || '#5865f2'}" class="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white shrink-0 ${!occ.isMuted ? 'speaking-ring' : ''}">${escapeHtml(occ.emoji || '😎')}</div>
-                            <span class="text-xs text-[#dbdee1] group-hover:text-white truncate">${escapeHtml(occ.name)}</span>
+                      ${occupants.map(occ => {
+                        const isOccMe = normUser(occ.username) === me;
+                        return `
+                          <div onclick="${occ.isStreaming ? `watchMemberStream('${occ.username}')` : `joinVoiceChannel('${vc.id}')`}"
+                            class="flex items-center justify-between gap-1.5 px-1.5 py-1 rounded hover:bg-[#35373c] cursor-pointer group">
+                            <div class="flex items-center gap-2 min-w-0">
+                              <div style="background:${occ.color || '#5865f2'}" class="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white shrink-0 ${!occ.isMuted ? 'speaking-ring' : ''}">${escapeHtml(occ.emoji || '😎')}</div>
+                              <span class="text-xs text-[#dbdee1] group-hover:text-white truncate">${escapeHtml(occ.name)}</span>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                              ${occ.isMuted ? `<span title="Mutado" class="text-[11px] text-[#f23f43]">🔇</span>` : ''}
+                              ${occ.isStreaming ? `<span class="bg-[#f23f43] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded tracking-wide">AO VIVO</span>` : ''}
+                              ${isAdmin && !isOccMe ? `<button type="button" onclick="adminKickFromVoice('${occ.username}', event)" title="Desconectar da Sala (Admin)" class="opacity-0 group-hover:opacity-100 px-1 py-0.5 rounded bg-[#f23f43]/20 hover:bg-[#f23f43] text-[#f23f43] hover:text-white text-[10px] font-bold transition cursor-pointer">✕</button>` : ''}
+                            </div>
                           </div>
-                          <div class="flex items-center gap-1 shrink-0">
-                            ${occ.isMuted ? `<span title="Mutado" class="text-[11px] text-[#f23f43]">🔇</span>` : ''}
-                            ${occ.isStreaming ? `<span class="bg-[#f23f43] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded tracking-wide">AO VIVO</span>` : ''}
-                          </div>
-                        </div>
-                      `).join('')}
+                        `;
+                      }).join('')}
                     </div>
                   ` : ''}
                 </div>
@@ -2159,7 +2243,7 @@
                     if (!users || users.length === 0) return '';
                     const mine = currentUser && users.includes(normUser(currentUser.username));
                     return `
-                      <button onclick="toggleReaction('${msg.id}', '${emoji}')" class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border cursor-pointer transition ${mine ? 'bg-[#5865f2]/20 border-[#5865f2] text-white' : 'bg-[#2b2d31] border-transparent hover:border-[#4e5058] text-[#b5bac1]'}">
+                      <button type="button" onclick="toggleReaction('${msg.id}', '${emoji}')" class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border cursor-pointer transition ${mine ? 'bg-[#5865f2]/20 border-[#5865f2] text-white' : 'bg-[#2b2d31] border-transparent hover:border-[#4e5058] text-[#b5bac1]'}">
                         <span>${emoji}</span>
                         <span class="font-semibold text-[11px]">${users.length}</span>
                       </button>
@@ -2170,11 +2254,11 @@
             </div>
 
             <div class="msg-actions absolute -top-3 right-2 bg-[#313338] border border-[#1e1f22] rounded-md shadow-lg flex items-center overflow-hidden">
-              <button onclick="toggleReaction('${msg.id}', '👍')" title="Curtir" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">👍</button>
-              <button onclick="toggleReaction('${msg.id}', '😂')" title="Rir" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">😂</button>
-              <button onclick="toggleReaction('${msg.id}', '🔥')" title="Fogo" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">🔥</button>
-              <button onclick="startReply('${msg.id}')" title="Responder" class="px-2 py-1 hover:bg-[#35373c] text-xs text-[#b5bac1] hover:text-white cursor-pointer">↩️</button>
-              ${canDelete ? `<button onclick="deleteMessage('${msg.id}')" title="Apagar" class="px-2 py-1 hover:bg-[#f23f43] text-xs text-[#f23f43] hover:text-white cursor-pointer">🗑️</button>` : ''}
+              <button type="button" onclick="toggleReaction('${msg.id}', '👍')" title="Curtir" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">👍</button>
+              <button type="button" onclick="toggleReaction('${msg.id}', '😂')" title="Rir" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">😂</button>
+              <button type="button" onclick="toggleReaction('${msg.id}', '🔥')" title="Fogo" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">🔥</button>
+              <button type="button" onclick="startReply('${msg.id}')" title="Responder" class="px-2 py-1 hover:bg-[#35373c] text-xs text-[#b5bac1] hover:text-white cursor-pointer">↩️</button>
+              ${canDelete ? `<button type="button" onclick="deleteMessage('${msg.id}')" title="Apagar" class="px-2 py-1 hover:bg-[#f23f43] text-xs text-[#f23f43] hover:text-white cursor-pointer">🗑️</button>` : ''}
             </div>
           </div>
         `;
@@ -2188,6 +2272,8 @@
       const allUsers = Object.values(usersMap);
       const online = allUsers.filter(u => u.status !== 'offline');
       const offline = allUsers.filter(u => u.status === 'offline');
+      const isAdmin = isCurrentUserAdmin();
+      const me = currentUser ? normUser(currentUser.username) : '';
 
       const statusColors = { online: '#23a55a', idle: '#f0b232', dnd: '#f23f43', offline: '#80848e' };
 
@@ -2198,10 +2284,12 @@
             <h4 class="px-2 mb-1.5 text-[11px] font-bold uppercase tracking-wider text-[#949ba4]">${title} — ${list.length}</h4>
             <div class="space-y-0.5">
               ${list.map(u => {
-                const vState = voiceStatesMap[normUser(u.username)];
+                const uKey = normUser(u.username);
+                const vState = voiceStatesMap[uKey];
+                const canManage = isAdmin && uKey !== me && !u.isAdmin;
                 return `
                   <div onclick="${vState?.isStreaming ? `watchMemberStream('${u.username}')` : ''}"
-                    class="flex items-center justify-between gap-2 px-2 py-1.5 rounded hover:bg-[#35373c] ${u.status === 'offline' ? 'opacity-50' : ''} ${vState?.isStreaming ? 'cursor-pointer' : ''}">
+                    class="group flex items-center justify-between gap-1.5 px-2 py-1.5 rounded hover:bg-[#35373c] ${u.status === 'offline' ? 'opacity-60' : ''} ${vState?.isStreaming ? 'cursor-pointer' : ''}">
                     <div class="flex items-center gap-2.5 min-w-0">
                       <div class="relative shrink-0">
                         <div style="background:${u.color || '#5865f2'}" class="w-8 h-8 rounded-full flex items-center justify-center text-sm text-white">${escapeHtml(u.emoji || '😎')}</div>
@@ -2215,7 +2303,11 @@
                         <p class="text-[11px] text-[#949ba4] truncate">${vState ? (vState.isStreaming ? '🔴 Transmitindo tela' : '🔊 Na sala de voz') : `@${escapeHtml(u.username)}`}</p>
                       </div>
                     </div>
-                    ${vState?.isStreaming ? `<span class="bg-[#f23f43] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded shrink-0">LIVE</span>` : ''}
+                    <div class="flex items-center gap-1 shrink-0">
+                      ${vState?.isStreaming ? `<span class="bg-[#f23f43] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded">LIVE</span>` : ''}
+                      ${canManage && vState ? `<button type="button" onclick="adminKickFromVoice('${u.username}', event)" title="Desconectar da Sala (Admin)" class="opacity-0 group-hover:opacity-100 p-1 rounded bg-[#f0b232]/20 hover:bg-[#f0b232] text-[#f0b232] hover:text-black text-[10px] font-bold transition cursor-pointer">👢</button>` : ''}
+                      ${canManage ? `<button type="button" onclick="adminDeleteUserProfile('${u.username}', event)" title="Excluir Perfil (Admin)" class="opacity-0 group-hover:opacity-100 p-1 rounded bg-[#f23f43]/20 hover:bg-[#f23f43] text-[#f23f43] hover:text-white text-[10px] font-bold transition cursor-pointer">🗑️</button>` : ''}
+                    </div>
                   </div>
                 `;
               }).join('')}
@@ -2252,6 +2344,8 @@
 
       const playerBox = document.getElementById('live-player-box');
       const me = currentUser ? normUser(currentUser.username) : '';
+      const isAdmin = isCurrentUserAdmin();
+
       if (watchingStreamId && voiceStatesMap[watchingStreamId]?.isStreaming) {
         const streamer = voiceStatesMap[watchingStreamId];
         const isSelfStream = watchingStreamId === me;
@@ -2284,8 +2378,13 @@
         const isMe = normUser(occ.username) === me;
         return `
           <div class="relative bg-[#1e1f22] border-2 ${!occ.isMuted ? 'speaking-card' : 'border-[#2b2d31]'} rounded-xl flex flex-col items-center justify-center p-4 ${isCompact ? 'min-h-[104px]' : 'min-h-[180px]'} transition">
+            ${isAdmin && !isMe ? `
+              <button type="button" onclick="adminKickFromVoice('${occ.username}', event)" title="Desconectar da Sala (Admin)" class="absolute top-2.5 left-2.5 flex items-center gap-1 bg-[#2b2d31] hover:bg-[#f23f43] text-[#dbdee1] hover:text-white text-[10px] font-bold px-2 py-1 rounded shadow cursor-pointer transition">
+                <span>👢 Expulsar</span>
+              </button>
+            ` : ''}
             ${occ.isStreaming ? `
-              <button onclick="watchMemberStream('${occ.username}')" class="absolute top-2.5 right-2.5 flex items-center gap-1.5 bg-[#f23f43] hover:bg-[#da373c] text-white text-[10px] font-extrabold uppercase px-2 py-1 rounded shadow cursor-pointer">
+              <button type="button" onclick="watchMemberStream('${occ.username}')" class="absolute top-2.5 right-2.5 flex items-center gap-1.5 bg-[#f23f43] hover:bg-[#da373c] text-white text-[10px] font-extrabold uppercase px-2 py-1 rounded shadow cursor-pointer">
                 <span class="w-1.5 h-1.5 rounded-full bg-white live-dot"></span>
                 <span>${watchingStreamId === normUser(occ.username) ? 'AO VIVO' : '▶ Assistir'}</span>
               </button>
@@ -2345,7 +2444,7 @@
     window.selectTextChannel = (id) => {
       activeChannelId = id;
       voiceViewMode = 'text';
-      closeMobileDrawers();
+      window.closeMobileDrawers();
       renderChannels();
       renderMessages();
       renderVoiceStage();
@@ -2372,8 +2471,8 @@
       };
 
       input.value = '';
-      clearPendingImage();
-      cancelReply();
+      window.clearPendingImage();
+      window.cancelReply();
 
       if (isCloudReady) {
         await addDoc(colPath('messages'), payload);
@@ -2467,7 +2566,7 @@
     };
 
     // =========================================================================
-    // MODAIS (CONVITE, REDE/SEGURANÇA/ADMIN, PERFIL, CRIAR SERVIDOR/CANAL)
+    // MODAIS (CONVITE, REDE/SEGURANÇA/ADMIN/CONTAS, PERFIL, CRIAR SERVIDOR/CANAL)
     // =========================================================================
     function openModal(html) {
       document.getElementById('modal-box').innerHTML = html;
@@ -2475,10 +2574,10 @@
     }
 
     window.closeModal = () => {
-      stopDiagnosticsMic();
+      window.stopDiagnosticsMic();
       document.getElementById('modal-overlay').classList.add('hidden');
     };
-    window.closeModalOnBackdrop = (e) => { if (e.target.id === 'modal-overlay') closeModal(); };
+    window.closeModalOnBackdrop = (e) => { if (e.target.id === 'modal-overlay') window.closeModal(); };
 
     window.openNetworkModal = () => {
       const ghStatus = netStats.githubOnline === null
@@ -2499,15 +2598,16 @@
 
       const isAdmin = isCurrentUserAdmin();
       const regsOpen = securityConfig.registrationsOpen !== false;
+      const allAccounts = Object.values(usersMap);
 
       openModal(`
         <div class="p-5 space-y-4 max-h-[88vh] overflow-y-auto">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-lg font-bold text-white">📡 Rede, Backup & Segurança</h3>
-              <p class="text-xs text-[#949ba4]">Anti-travamento P2P, controle de acesso e alternância GitHub ↔ PC</p>
+              <h3 class="text-lg font-bold text-white">📡 Rede, Backup & Painel Admin</h3>
+              <p class="text-xs text-[#949ba4]">Gerenciamento de membros, cadastros e alternância GitHub ↔ PC</p>
             </div>
-            <button onclick="closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+            <button type="button" onclick="closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
           </div>
 
           ${isAdmin ? `
@@ -2528,6 +2628,32 @@
                 </div>
                 <button type="submit" class="mt-4 px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">Salvar Código</button>
               </form>
+            </div>
+
+            <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3.5 space-y-2">
+              <p class="text-xs font-bold uppercase text-[#949cf7]">👥 Gerenciar Contas & Salas (${allAccounts.length})</p>
+              <div class="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                ${allAccounts.map(u => {
+                  const uKey = normUser(u.username);
+                  const inVoice = Boolean(voiceStatesMap[uKey]);
+                  const isMe = currentUser && uKey === normUser(currentUser.username);
+                  return `
+                    <div class="flex items-center justify-between gap-2 bg-[#1e1f22] px-2.5 py-1.5 rounded">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span style="background:${u.color || '#5865f2'}" class="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white shrink-0">${escapeHtml(u.emoji || '😎')}</span>
+                        <div class="min-w-0">
+                          <p class="text-xs font-semibold text-white truncate">${escapeHtml(u.name)} ${u.isAdmin ? '<span class="text-[9px] text-[#949cf7]">(ADMIN)</span>' : ''}</p>
+                          <p class="text-[10px] text-[#949ba4] truncate">@${escapeHtml(u.username)} ${inVoice ? '· 🔊 Em call' : ''}</p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1 shrink-0">
+                        ${!isMe && inVoice ? `<button type="button" onclick="adminKickFromVoice('${u.username}', event)" class="px-2 py-1 rounded bg-[#f0b232]/20 hover:bg-[#f0b232] text-[#f0b232] hover:text-black text-[10px] font-bold cursor-pointer transition">👢 Desconectar</button>` : ''}
+                        ${!isMe && !u.isAdmin ? `<button type="button" onclick="adminDeleteUserProfile('${u.username}', event)" class="px-2 py-1 rounded bg-[#f23f43]/20 hover:bg-[#f23f43] text-[#f23f43] hover:text-white text-[10px] font-bold cursor-pointer transition">🗑️ Excluir</button>` : ''}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
             </div>
           ` : ''}
 
@@ -2551,14 +2677,14 @@
               <p class="text-[11px] font-bold uppercase text-[#949ba4]">1. GitHub Pages</p>
               <p class="text-xs mt-1">${ghStatus}</p>
               ${isAdmin ? `
-                <button onclick="switchToHost('github')" class="mt-2.5 w-full py-1.5 rounded bg-[#383a40] hover:bg-[#5865f2] text-white text-xs font-semibold cursor-pointer transition">Usar GitHub</button>
+                <button type="button" onclick="switchToHost('github')" class="mt-2.5 w-full py-1.5 rounded bg-[#383a40] hover:bg-[#5865f2] text-white text-xs font-semibold cursor-pointer transition">Usar GitHub</button>
               ` : ''}
             </div>
             <div class="bg-[#2b2d31] border border-[#3f4147] rounded-lg p-3">
               <p class="text-[11px] font-bold uppercase text-[#949ba4]">2. PC Local (Backup)</p>
               <p class="text-xs mt-1">${pcStatus}</p>
               ${isAdmin ? `
-                <button onclick="switchToHost('pc')" class="mt-2.5 w-full py-1.5 rounded bg-[#383a40] hover:bg-[#23a55a] text-white text-xs font-semibold cursor-pointer transition">Usar PC Backup</button>
+                <button type="button" onclick="switchToHost('pc')" class="mt-2.5 w-full py-1.5 rounded bg-[#383a40] hover:bg-[#23a55a] text-white text-xs font-semibold cursor-pointer transition">Usar PC Backup</button>
               ` : ''}
             </div>
           </div>
@@ -2607,7 +2733,7 @@
         await setDoc(docPath('settings', 'security'), securityConfig, { merge: true });
       }
       applyRegistrationLockUI();
-      openNetworkModal();
+      window.openNetworkModal();
       showToast(nextState ? '🔓 Novos cadastros reabertos!' : '🔒 Novos cadastros fechados! Nenhum estranho pode criar conta.');
     };
 
@@ -2627,7 +2753,7 @@
       if (isCloudReady) {
         await setDoc(docPath('settings', 'security'), securityConfig, { merge: true });
       }
-      openNetworkModal();
+      window.openNetworkModal();
       showToast(`Código de convite atualizado para: ${newCode}`);
     };
 
@@ -2668,19 +2794,19 @@
         <div class="p-5 space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-bold text-white">Convidar Amigos para o FubasCord</h3>
-            <button onclick="closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
+            <button type="button" onclick="closeModal()" class="text-[#949ba4] hover:text-white cursor-pointer">✕</button>
           </div>
           <p class="text-xs text-[#b5bac1]">Envie o link e o código secreto abaixo para seus amigos criarem uma conta:</p>
           <div class="flex items-center gap-2 bg-[#1e1f22] p-2 rounded border border-[#2b2d31]">
             <input id="invite-url-input" readonly value="${escapeHtml(link)}" class="flex-1 bg-transparent text-xs text-white outline-none selectable" />
-            <button onclick="copyInviteLink()" class="px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">Copiar Link</button>
+            <button type="button" onclick="copyInviteLink()" class="px-3 py-1.5 rounded bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold cursor-pointer">Copiar Link</button>
           </div>
           <div class="bg-[#232428] border border-[#35373c] rounded-lg p-3 flex items-center justify-between">
             <div>
               <p class="text-[11px] font-bold uppercase text-[#949ba4]">Código de Convite Secreto</p>
               <p class="text-sm font-extrabold text-white tracking-wider mt-0.5 selectable">${regsOpen ? escapeHtml(securityConfig.inviteCode) : '🔒 CADASTROS FECHADOS'}</p>
             </div>
-            ${regsOpen ? `<button onclick="copyInviteCode()" class="px-3 py-1.5 rounded bg-[#23a55a] hover:bg-[#1a8245] text-white text-xs font-semibold cursor-pointer">Copiar Código</button>` : ''}
+            ${regsOpen ? `<button type="button" onclick="copyInviteCode()" class="px-3 py-1.5 rounded bg-[#23a55a] hover:bg-[#1a8245] text-white text-xs font-semibold cursor-pointer">Copiar Código</button>` : ''}
           </div>
         </div>
       `);
@@ -2752,7 +2878,7 @@
       }
       renderMeBar();
       renderMembers();
-      closeModal();
+      window.closeModal();
       showToast('Perfil atualizado!');
     };
 
@@ -2803,7 +2929,7 @@
       }
       activeServerId = id;
       activeChannelId = srv.channels[0].id;
-      closeModal();
+      window.closeModal();
       renderServers();
       renderChannels();
       renderMessages();
@@ -2848,14 +2974,14 @@
         srv.channels = updatedChannels;
         renderChannels();
       }
-      closeModal();
+      window.closeModal();
     };
 
     window.openImageLightbox = (src) => {
       openModal(`
         <div class="bg-black p-2 flex flex-col items-center">
           <img src="${src}" class="max-h-[80vh] max-w-full rounded" />
-          <button onclick="closeModal()" class="mt-2 px-4 py-1.5 rounded bg-[#313338] text-white text-xs cursor-pointer">Fechar</button>
+          <button type="button" onclick="closeModal()" class="mt-2 px-4 py-1.5 rounded bg-[#313338] text-white text-xs cursor-pointer">Fechar</button>
         </div>
       `);
     };
@@ -2883,6 +3009,8 @@
         el.classList.toggle('hidden', !membersDrawerOpen);
       }
     };
+
+    window.checkHostsHealth = checkHostsHealth;
 
     initBackend();
   </script>
