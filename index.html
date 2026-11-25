@@ -526,12 +526,15 @@
           }, { merge: true }).catch(() => {});
         }
 
+        const prevVoiceJson = JSON.stringify(voiceStatesMap);
         rebuildActiveVoiceStates();
         if (connectedVoiceChannelId) syncWebRTCPeers();
-        renderChannels();
-        renderMembers();
-        renderVoiceStage();
-        updateLiveJumpBanner();
+        if (JSON.stringify(voiceStatesMap) !== prevVoiceJson) {
+          renderChannels();
+          renderMembers();
+          renderVoiceStage();
+          updateLiveJumpBanner();
+        }
       }, 8000);
     }
 
@@ -1156,14 +1159,18 @@
       });
 
       onSnapshot(colPath('users'), (snap) => {
-        usersMap = {};
+        const nextUsers = {};
         snap.forEach(d => {
           const u = d.data();
           const key = normUser(u.username || d.id);
-          usersMap[key] = { ...u, username: key };
+          nextUsers[key] = { ...u, username: key };
         });
+
+        const prevJson = JSON.stringify(usersMap);
+        usersMap = nextUsers;
         applyRegistrationLockUI();
         rebuildActiveVoiceStates();
+
         if (currentUser) {
           const meKey = normUser(currentUser.username);
           if (!usersMap[meKey] && Object.keys(usersMap).length > 0) {
@@ -1176,8 +1183,12 @@
             renderMeBar();
           }
         }
-        renderMembers();
-        renderChannels();
+
+        if (JSON.stringify(usersMap) !== prevJson) {
+          renderMembers();
+          renderChannels();
+          renderMessages();
+        }
       });
 
       onSnapshot(colPath('servers'), (snap) => {
@@ -1206,6 +1217,8 @@
           const key = normUser(v.username || d.id);
           rawVoiceStates[key] = { ...v, username: key };
         });
+
+        const prevVoiceJson = JSON.stringify(voiceStatesMap);
         rebuildActiveVoiceStates();
 
         if (connectedVoiceChannelId && currentUser) {
@@ -1232,10 +1245,12 @@
           syncWebRTCPeers();
         }
 
-        renderChannels();
-        renderMembers();
-        renderVoiceStage();
-        updateLiveJumpBanner();
+        if (JSON.stringify(voiceStatesMap) !== prevVoiceJson) {
+          renderChannels();
+          renderMembers();
+          renderVoiceStage();
+          updateLiveJumpBanner();
+        }
       });
 
       onSnapshot(colPath('webrtcSignals'), (snap) => {
@@ -2168,15 +2183,15 @@
                         const isOccMe = normUser(occ.username) === me;
                         return `
                           <div onclick="${occ.isStreaming ? `watchMemberStream('${occ.username}')` : `joinVoiceChannel('${vc.id}')`}"
-                            class="flex items-center justify-between gap-1.5 px-1.5 py-1 rounded hover:bg-[#35373c] cursor-pointer group">
+                            class="flex items-center justify-between gap-1.5 px-1.5 py-1 rounded hover:bg-[#35373c] cursor-pointer">
                             <div class="flex items-center gap-2 min-w-0">
                               <div style="background:${occ.color || '#5865f2'}" class="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white shrink-0 ${!occ.isMuted ? 'speaking-ring' : ''}">${escapeHtml(occ.emoji || '😎')}</div>
-                              <span class="text-xs text-[#dbdee1] group-hover:text-white truncate">${escapeHtml(occ.name)}</span>
+                              <span class="text-xs text-[#dbdee1] hover:text-white truncate">${escapeHtml(occ.name)}</span>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
                               ${occ.isMuted ? `<span title="Mutado" class="text-[11px] text-[#f23f43]">🔇</span>` : ''}
                               ${occ.isStreaming ? `<span class="bg-[#f23f43] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded tracking-wide">AO VIVO</span>` : ''}
-                              ${isAdmin && !isOccMe ? `<button type="button" onclick="adminKickFromVoice('${occ.username}', event)" title="Desconectar da Sala (Admin)" class="opacity-0 group-hover:opacity-100 px-1 py-0.5 rounded bg-[#f23f43]/20 hover:bg-[#f23f43] text-[#f23f43] hover:text-white text-[10px] font-bold transition cursor-pointer">✕</button>` : ''}
+                              ${isAdmin && !isOccMe ? `<button type="button" onclick="adminKickFromVoice('${occ.username}', event)" title="Desconectar da Sala (Admin)" class="px-1.5 py-0.5 rounded bg-[#f23f43]/20 hover:bg-[#f23f43] text-[#f23f43] hover:text-white text-[10px] font-bold transition cursor-pointer">✕</button>` : ''}
                             </div>
                           </div>
                         `;
@@ -2209,11 +2224,14 @@
         return;
       }
 
+      const isAdmin = isCurrentUserAdmin();
+      const me = currentUser ? normUser(currentUser.username) : '';
+
       container.innerHTML = filtered.map((msg, idx) => {
         const prev = filtered[idx - 1];
         const grouped = prev && prev.authorId === msg.authorId && (msg.timestamp - prev.timestamp) < 300000 && !msg.replyTo;
         const timeStr = new Date(msg.timestamp || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const canDelete = currentUser && (normUser(msg.authorId) === normUser(currentUser.username) || currentUser.isAdmin);
+        const canDelete = Boolean(currentUser && (normUser(msg.authorId) === me || isAdmin));
         const reactions = msg.reactions || {};
 
         return `
@@ -2241,7 +2259,7 @@
                 <div class="flex flex-wrap gap-1.5 mt-1.5">
                   ${Object.entries(reactions).map(([emoji, users]) => {
                     if (!users || users.length === 0) return '';
-                    const mine = currentUser && users.includes(normUser(currentUser.username));
+                    const mine = currentUser && users.includes(me);
                     return `
                       <button type="button" onclick="toggleReaction('${msg.id}', '${emoji}')" class="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border cursor-pointer transition ${mine ? 'bg-[#5865f2]/20 border-[#5865f2] text-white' : 'bg-[#2b2d31] border-transparent hover:border-[#4e5058] text-[#b5bac1]'}">
                         <span>${emoji}</span>
@@ -2258,7 +2276,7 @@
               <button type="button" onclick="toggleReaction('${msg.id}', '😂')" title="Rir" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">😂</button>
               <button type="button" onclick="toggleReaction('${msg.id}', '🔥')" title="Fogo" class="px-2 py-1 hover:bg-[#35373c] text-xs cursor-pointer">🔥</button>
               <button type="button" onclick="startReply('${msg.id}')" title="Responder" class="px-2 py-1 hover:bg-[#35373c] text-xs text-[#b5bac1] hover:text-white cursor-pointer">↩️</button>
-              ${canDelete ? `<button type="button" onclick="deleteMessage('${msg.id}')" title="Apagar" class="px-2 py-1 hover:bg-[#f23f43] text-xs text-[#f23f43] hover:text-white cursor-pointer">🗑️</button>` : ''}
+              ${canDelete ? `<button type="button" onclick="deleteMessage('${msg.id}', event)" title="Apagar Mensagem" class="px-2 py-1 hover:bg-[#f23f43] text-xs text-[#f23f43] hover:text-white cursor-pointer">🗑️</button>` : ''}
             </div>
           </div>
         `;
@@ -2289,7 +2307,7 @@
                 const canManage = isAdmin && uKey !== me && !u.isAdmin;
                 return `
                   <div onclick="${vState?.isStreaming ? `watchMemberStream('${u.username}')` : ''}"
-                    class="group flex items-center justify-between gap-1.5 px-2 py-1.5 rounded hover:bg-[#35373c] ${u.status === 'offline' ? 'opacity-60' : ''} ${vState?.isStreaming ? 'cursor-pointer' : ''}">
+                    class="flex items-center justify-between gap-1.5 px-2 py-1.5 rounded hover:bg-[#35373c] ${u.status === 'offline' ? 'opacity-65' : ''} ${vState?.isStreaming ? 'cursor-pointer' : ''}">
                     <div class="flex items-center gap-2.5 min-w-0">
                       <div class="relative shrink-0">
                         <div style="background:${u.color || '#5865f2'}" class="w-8 h-8 rounded-full flex items-center justify-center text-sm text-white">${escapeHtml(u.emoji || '😎')}</div>
@@ -2305,8 +2323,8 @@
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
                       ${vState?.isStreaming ? `<span class="bg-[#f23f43] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded">LIVE</span>` : ''}
-                      ${canManage && vState ? `<button type="button" onclick="adminKickFromVoice('${u.username}', event)" title="Desconectar da Sala (Admin)" class="opacity-0 group-hover:opacity-100 p-1 rounded bg-[#f0b232]/20 hover:bg-[#f0b232] text-[#f0b232] hover:text-black text-[10px] font-bold transition cursor-pointer">👢</button>` : ''}
-                      ${canManage ? `<button type="button" onclick="adminDeleteUserProfile('${u.username}', event)" title="Excluir Perfil (Admin)" class="opacity-0 group-hover:opacity-100 p-1 rounded bg-[#f23f43]/20 hover:bg-[#f23f43] text-[#f23f43] hover:text-white text-[10px] font-bold transition cursor-pointer">🗑️</button>` : ''}
+                      ${canManage && vState ? `<button type="button" onclick="adminKickFromVoice('${u.username}', event)" title="Desconectar da Sala (Admin)" class="p-1.5 rounded bg-[#f0b232]/20 hover:bg-[#f0b232] text-[#f0b232] hover:text-black text-[11px] font-bold transition cursor-pointer">👢</button>` : ''}
+                      ${canManage ? `<button type="button" onclick="adminDeleteUserProfile('${u.username}', event)" title="Excluir Perfil (Admin)" class="p-1.5 rounded bg-[#f23f43]/15 hover:bg-[#f23f43] text-[#f23f43] hover:text-white text-[11px] font-bold transition cursor-pointer">🗑️</button>` : ''}
                     </div>
                   </div>
                 `;
@@ -2502,12 +2520,35 @@
       }
     };
 
-    window.deleteMessage = async (msgId) => {
+    window.deleteMessage = async (msgId, e) => {
+      if (e) e.stopPropagation();
+      if (!currentUser) return;
+
+      const targetMsg = messagesList.find(m => m.id === msgId);
+      if (!targetMsg) return;
+
+      const isOwner = normUser(targetMsg.authorId) === normUser(currentUser.username);
+      if (!isOwner && !isCurrentUserAdmin()) {
+        showToast('Apenas o autor ou o Admin pode apagar esta mensagem.');
+        return;
+      }
+
+      const previousMessages = [...messagesList];
+      messagesList = messagesList.filter(m => m.id !== msgId);
+      renderMessages();
+
       if (isCloudReady) {
-        await deleteDoc(docPath('messages', msgId));
+        try {
+          await deleteDoc(docPath('messages', msgId));
+          showToast('🗑️ Mensagem apagada.');
+        } catch (err) {
+          console.error('Erro ao apagar mensagem no Firestore:', err);
+          messagesList = previousMessages;
+          renderMessages();
+          showToast('❌ Erro de permissão no Firestore ao apagar mensagem.');
+        }
       } else {
-        messagesList = messagesList.filter(m => m.id !== msgId);
-        renderMessages();
+        showToast('🗑️ Mensagem apagada.');
       }
     };
 
